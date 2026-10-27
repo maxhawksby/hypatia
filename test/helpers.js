@@ -54,7 +54,7 @@ function makeRepo({ generic = false } = {}) {
     write(root, "README.md", "# Acme Notes\n\nA note-taking app. Start at a hub: [Senses](docs/wiki/senses.md) or [Movement](docs/wiki/movement.md).\n");
     for (const name of fs.readdirSync(path.join(root, "docs", "wiki"))) {
       const file = path.join(root, "docs", "wiki", name);
-      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("parent: oak", "parent: home"));
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("parent: oak", "parent: home").replace(/\bOak\b/g, "Acme"));
     }
   }
   git(tmp, ["init", "-q", "--bare", "-b", "master", origin]);
