@@ -4,7 +4,7 @@ description: Keep the team wiki (README.md + {{WIKI_DIR}}/) true to the code. Us
 ---
 
 <!--
-  Hypatia template. `hypatia install` (milestone 3) fills these in:
+  Hypatia template. `hypatia init` fills these in:
     {{REPO_SLUG}}       owner/name on GitHub
     {{DEFAULT_BRANCH}}  the branch new work starts from (main, master, ...)
     {{WIKI_DIR}}        the folder of wiki pages (docs/wiki)
@@ -26,9 +26,11 @@ code: [web/src/search/**]     # optional: the repo paths this page documents
 ---
 ```
 
-## Privacy (always)
+## Privacy (a firm rule, always)
 
-Pages describe how the code works. Never put real records, people's personal details, email addresses, phone numbers, student or customer IDs, passwords or API keys on a page, not even as examples. Use made-up placeholders (`user@example.com`, `<api-key>`).
+Pages describe how the code works, never real records, user names, emails or keys. That means no rows from a real database, no names or details of the app's users, no email addresses, phone numbers, student or customer IDs, passwords, tokens or API keys, not even as examples. Use made-up placeholders (`user@example.com`, `<api-key>`, "a student"). The team view shows only the repo's GitHub collaborators, never the app's users.
+
+`{{HYPATIA}} check` runs a privacy guard: it names the page and line of anything that looks like personal data or a key, and the website build refuses to publish until it is gone. Never silence it by adding a real value to `allow:` in `{{CONFIG_FILE}}`; that list is only for values that are safe to publish (a public support address). A page that must hold sensitive notes gets `private: true` in its front matter: it shows on the local site but never on the website.
 
 ## When starting a task
 

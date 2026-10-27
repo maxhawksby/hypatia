@@ -3,7 +3,8 @@
 //
 //   hypatia serve [--port <n>] [--no-open]   open this repo's wiki locally, with live reload
 //   hypatia build [--out <folder>]           write the site and its data to a folder (default _site)
-//   hypatia check                            check the pages (links, parents) without writing anything
+//   hypatia check                            check the pages and the privacy guard without writing anything
+//   hypatia init [--yes] [--dry-run]         set Hypatia up in this repo
 //
 // Run it from anywhere inside the repo; it works on the repo's top folder.
 "use strict";
@@ -13,20 +14,32 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 const { buildGraph, describe, WikiError } = require("../lib/build-graph");
 const { serve, graphScript, SITE } = require("../lib/serve");
+const { loadConfig } = require("../lib/team");
+const privacy = require("../lib/privacy");
+const { init } = require("../lib/init");
 
 const HELP = `Hypatia - a graph-style team wiki for any git repo.
 
 Usage, from inside a repo:
+  hypatia init [--dry-run] [--yes] [--public | --private] [--runner "<command>"]
+      Sets Hypatia up in this repo: a docs/wiki/ folder with a starter page,
+      the wiki-keeper agent skill, and a way to open the wiki locally. A
+      public repo also gets the GitHub Pages workflow and the website link in
+      its About box, after you say yes. Never overwrites a file; safe to run
+      again. --dry-run only prints the plan.
   hypatia serve [--port <number>] [--no-open]
       Builds the wiki for this repo, serves it at http://localhost:4410/,
       opens your browser and reloads it when README.md, docs/wiki/ or
       docs/hypatia.yml change. Stop it with Ctrl+C.
   hypatia build [--out <folder>]
       Writes the site and its data (graph.json, graph.js) to a folder,
-      _site by default, ready for GitHub Pages or any static server.
+      _site by default, ready for GitHub Pages or any static server. Pages
+      marked "private: true" are left out. Stops, writing nothing, when the
+      privacy guard finds an email, phone number, ID number or key.
   hypatia check
-      Checks the wiki pages (front matter, parents, links) and says what to
-      fix. Writes nothing; exits with 1 when a page has a problem.
+      Checks the wiki pages (front matter, parents, links) and runs the
+      privacy guard, and says what to fix. Writes nothing; exits with 1 when
+      a page has a problem.
 
 The team comes from git history, and from GitHub when it can be read. The
 optional docs/hypatia.yml sets the title, names, colors and focus lines.
@@ -69,10 +82,15 @@ async function build(root, argv) {
   }
   let graph;
   try {
-    graph = await buildGraph({ root, token: process.env.GITHUB_TOKEN || null });
+    graph = await buildGraph({ root, token: process.env.GITHUB_TOKEN || null, publish: true });
   } catch (err) {
     if (!(err instanceof WikiError)) throw err;
     console.error(`hypatia: ${err.message}`);
+    return 1;
+  }
+  const hits = privacy.scanSite(root, graph, { allow: loadConfig(root).allow });
+  if (hits.length) {
+    console.error(privacyReport(hits, "Nothing was written: the site would publish"));
     return 1;
   }
   const out = path.resolve(process.cwd(), opts.out);
@@ -96,14 +114,43 @@ async function check(root, argv) {
     return 2;
   }
   try {
-    const graph = await buildGraph({ root, token: null, warn: (msg) => console.error(`hypatia: ${msg}`) });
-    console.log(`Wiki check passed: ${graph.nodes.length} pages, ${graph.edges.length} links and parents.`);
+    const excluded = [];
+    const graph = await buildGraph({ root, token: null, publish: true, excluded, warn: (msg) => console.error(`hypatia: ${msg}`) });
+    const { allow } = loadConfig(root);
+    const hits = privacy.scanSite(root, graph, { allow });
+    const logins = graph.people.map((p) => p.github);
+    const local = privacy.scanFiles(root, excluded.map((e) => e.path), { allow, logins });
+    if (local.length) {
+      console.error(`hypatia: private pages (never published) mention:\n${privacy.describeHits(local).map((l) => "  " + l).join("\n")}`);
+    }
+    if (hits.length) {
+      console.error(privacyReport(hits, "The wiki check failed: the public site would show"));
+      return 1;
+    }
+    const kept = excluded.length ? `, ${excluded.length} private ${excluded.length === 1 ? "page" : "pages"} left out` : "";
+    console.log(`Wiki check passed: ${graph.nodes.length} pages, ${graph.edges.length} links and parents${kept}, no personal data or keys found.`);
     return 0;
   } catch (err) {
     if (!(err instanceof WikiError)) throw err;
     console.error(`hypatia: ${err.message}`);
     return 1;
   }
+}
+
+// What the privacy guard found, masked, and how to clear it.
+function privacyReport(hits, lead) {
+  return (
+    `hypatia: ${lead} personal data or secrets:\n` +
+    privacy.describeHits(hits).map((l) => "  " + l).join("\n") +
+    "\n\nRemove them from the page (use made-up values like user@example.com), mark the page" +
+    '\n"private: true" to keep it off the website, or, if a value is safe to publish, list it' +
+    "\nunder allow: in docs/hypatia.yml." +
+    (hits.some((h) => h.file.toLowerCase() === "readme.md") ? "\nREADME.md is the home page and is always published: edit it instead." : "") +
+    (hits.some((h) => !h.page)
+      ? "\nSite data (commit messages, branch names, issue titles) is published too. Git history can't be edited" +
+        "\nsafely, so list a value already in it under allow: if it is safe, and keep it out of new ones."
+      : "")
+  );
 }
 
 async function main(argv) {
@@ -113,6 +160,7 @@ async function main(argv) {
     return command ? 0 : 2;
   }
   const root = repoRoot(process.cwd());
+  if (command === "init") return init(root, rest);
   if (command === "serve") return serve(root, rest);
   if (command === "build") return build(root, rest);
   if (command === "check") return check(root, rest);

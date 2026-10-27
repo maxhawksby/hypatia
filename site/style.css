@@ -247,7 +247,7 @@ mark.hit.cur { background: #ffd666; color: #191919; box-shadow: 0 0 0 2px rgba(2
 .props .off { color: var(--muted); }
 
 /* markdown */
-.md { font-size: 15.5px; line-height: 1.7; }
+.md { font-size: 15.5px; line-height: 1.7; overflow-wrap: break-word; }
 .md h1, .md h2, .md h3, .md h4 { font-weight: 600; line-height: 1.3; color: var(--text-strong); scroll-margin-top: 16px; }
 .md h1 { font-size: 32px; line-height: 1.2; margin: 0 0 16px; letter-spacing: -.015em; }
 .md h2 { font-size: 21px; margin: 40px 0 10px; letter-spacing: -.005em; }

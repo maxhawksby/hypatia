@@ -854,6 +854,7 @@
         lc.sha ? [" ", h("code", null, lc.sha.slice(0, 7))] : null));
     }
     if (n.code.length) row("Code", h("div", { class: "line" }, n.code.map((c, i) => [i ? ", " : "", ext(codeDir(c), treeUrl(c))])));
+    if (n.private) row("Private", h("div", { class: "line" }, "Only on this computer: the website leaves this page out."));
     if (n.path) row("Source", h("div", { class: "line" }, ext(n.path, blobUrl(n.path)),
       D.published ? null : h("span", { class: "off" }, " (branch " + D.branch + " is not on GitHub yet)")));
     if (!rows.length) return;
