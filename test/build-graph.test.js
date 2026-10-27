@@ -362,3 +362,16 @@ test("Markdown in the wiki folder without front matter is a normal doc that page
     const g = await build(root);
     assert.ok(!g.nodes.some((n) => n.id === "Home" || n.title.startsWith("An older")));
   }));
+
+test("the data says whether GitHub was read, so the site can tell 'nothing open' from 'no access'", () =>
+  withRepo(async (root) => {
+    assert.strictEqual((await build(root)).github, false);
+    const real = global.fetch;
+    global.fetch = async () => ({ ok: true, status: 200, statusText: "OK", headers: new Map(), json: async () => [] });
+    try {
+      const g = await build(root, { token: "t", repo: "acme/notes-app" });
+      assert.deepStrictEqual([g.github, g.work], [true, []]);
+    } finally {
+      global.fetch = real;
+    }
+  }));

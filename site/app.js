@@ -95,6 +95,8 @@
       published: d.published !== false && !!d.repo,
       generated_at: d.generated_at || null,
       sample: !!d.sample,
+      // older data has no "github": guess from whether there is any work
+      github: typeof d.github === "boolean" ? d.github : !!d.sample || arr(d.work).length > 0 || arr(d.questions).length > 0,
       people: arr(d.people), nodes: arr(d.nodes), edges: arr(d.edges),
       work: arr(d.work), questions: arr(d.questions), recent: arr(d.recent), branches: arr(d.branches),
     };
@@ -740,7 +742,7 @@
 
     // Working on now
     const ws = workOf(p.id).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
-    const noGithub = !D.work.length && !D.sample;
+    const noGithub = !D.github;
     el.append(sec("Working on now", ws.length, ws.length
       ? h("ul", { class: "pv-work", style: "--c:" + p.color }, ws.map((w) => h("li", null,
           h("div", { class: "pv-w-top" },
@@ -971,7 +973,7 @@
     const where = n.depth < 2 && scope.size > 1 ? " (this page and the pages under it)" : "";
     const box = $("answer");
     box.textContent = "";
-    const noGithub = !D.work.length && !D.questions.length && !D.sample;
+    const noGithub = !D.github;
     const workLine = (w) => {
       const pid = workPerson(w);
       return h("li", null, h("span", { class: "who", style: "color:" + personColor(pid) }, personName(pid, w.author)), " - ",
