@@ -91,5 +91,7 @@ Request a teammate: `gh pr create --reviewer <login>` or `gh pr edit <n> --add-r
 ## What `{{HYPATIA}} check` checks
 
 - every page has a title and a parent that exists, and page names are lowercase words joined by '-';
-- every link to a .md file works;
+- every link from a wiki page, and every link into {{WIKI_DIR}}/, works (README.md's links to other repo files only warn);
+- every `code:` path or glob matches at least one file in the repo;
 - following parents from any page reaches README.md (no orphans, no loops).
+- warns when a hub page (parent: home) is not reachable by links from README.md, and counts `TODO(` markers.

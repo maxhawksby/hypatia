@@ -51,6 +51,10 @@ private: true               # optional: on the local site only, never on the web
 ---
 ```
 
+### What `hypatia check` checks
+
+Besides the front matter, parents and links, `check` fails when a page's `code:` path or glob matches no file in the repo (tracked or new): the page would point at nothing. It warns, without failing, when a hub page (`parent: home`) is not reachable by links from README.md, and it counts the `TODO(` markers left in the pages.
+
 ### Links
 
 A wiki page's links, and any link into `docs/wiki/`, must point at a file that exists: `hypatia check` and `hypatia build` fail until they do. README.md belongs to the project rather than the wiki, so its links to other repo files that do not exist are only a warning. While you write, `hypatia serve` keeps the site updating through a broken link: the link shows struck out, and a note lists it.

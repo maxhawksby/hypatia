@@ -304,6 +304,7 @@ test("by default, everything committed says npx hypatia, and the workflow pins t
     assert.match(read(repo.root, SITE_WORKFLOW), new RegExp(`run: npx hypatia@${version.replace(/\./g, "\\.")} build --out _site`));
     assert.match(r.out, /Open the wiki on your computer: npm run wiki/);
     assert.match(r.out, /then run npx hypatia check\./);
+    assert.match(r.out, /Link the wiki from README\.md, e\.g\. \[Start here\]\(docs\/wiki\/start-here\.md\)/);
     assert.ok(exists(repo.root, ".github/workflows/wiki-refresh.yml"), "a published runner can go into the workflows");
   } finally {
     repo.cleanup();
