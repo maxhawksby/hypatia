@@ -26,7 +26,7 @@ A public repo (GitHub says so, or `--public`) also gets, only after a yes at the
 
 A website already in the About box, or Pages already publishing from a branch, is left alone. A private repo gets no website. Init never overwrites a file and is safe to run again; it says what it left alone.
 
-GitHub has to download Hypatia to build the site, so the workflows are only installed with `--runner "<command>"` naming a Hypatia GitHub can reach (for example `npx --yes <package>`). Until Hypatia is published, the default runner is this computer's copy, which works locally only.
+Everything init writes is committed and shared, so it names Hypatia the way a teammate would run it: `npx hypatia serve` and `npx hypatia check` in the pages, the skill and the `wiki` script, and `npx hypatia@<this version>` in the Pages workflow, so the website keeps building with the version it was set up with. `--runner "<command>"` names another command for all of them. Until Hypatia is on npm those commands do not work yet; run it with `node <path to hypatia>/bin/hypatia.js` meanwhile.
 
 ## Privacy guard
 

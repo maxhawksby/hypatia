@@ -284,6 +284,32 @@ test("a runner on this computer never goes into a workflow, even with --yes", as
   }
 });
 
+test("by default, everything committed says npx hypatia, and the workflow pins this version", async () => {
+  const repo = makeRepo({ generic: true });
+  try {
+    fs.rmSync(path.join(repo.root, "docs", "wiki"), { recursive: true });
+    write(repo.root, "package.json", '{ "name": "notes" }\n');
+    const { version } = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
+    const r = await run(repo.root, ["--yes"], { gh: fakeGh({ visibility: "PUBLIC" }) });
+    assert.strictEqual(r.code, 0, r.out);
+    const here = path.join(__dirname, "..");
+    const written = [r.out, ...["docs/wiki/start-here.md", SKILL, "package.json", SITE_WORKFLOW].map((f) => read(repo.root, f))];
+    for (const text of written) {
+      assert.ok(!text.includes(here), "no path on this computer in what is shared");
+      assert.doesNotMatch(text, /node \S*hypatia\.js/);
+    }
+    assert.match(read(repo.root, "docs/wiki/start-here.md"), /`npx hypatia check`/);
+    assert.match(read(repo.root, SKILL), /`npx hypatia serve`/);
+    assert.strictEqual(JSON.parse(read(repo.root, "package.json")).scripts.wiki, "npx hypatia serve");
+    assert.match(read(repo.root, SITE_WORKFLOW), new RegExp(`run: npx hypatia@${version.replace(/\./g, "\\.")} build --out _site`));
+    assert.match(r.out, /Open the wiki on your computer: npm run wiki/);
+    assert.match(r.out, /then run npx hypatia check\./);
+    assert.ok(exists(repo.root, ".github/workflows/wiki-refresh.yml"), "a published runner can go into the workflows");
+  } finally {
+    repo.cleanup();
+  }
+});
+
 test("when GitHub can't be read, init asks whether the repo is public, else keeps it private", async () => {
   const repo = makeRepo({ generic: true });
   try {
@@ -328,7 +354,7 @@ test("hypatia init runs from the CLI with a stand-in gh, and --dry-run writes no
     const real = spawnSync(process.execPath, [CLI, "init"], { cwd: path.join(repo.root, "src"), env, encoding: "utf8", input: "" });
     assert.strictEqual(real.status, 0, real.stderr);
     assert.ok(exists(repo.root, "docs/wiki/start-here.md"), "runs on the repo's top folder from anywhere inside it");
-    assert.match(read(repo.root, SKILL), /node .*bin\/hypatia\.js check/);
+    assert.match(read(repo.root, SKILL), /`npx hypatia check`/);
   } finally {
     repo.cleanup();
   }
