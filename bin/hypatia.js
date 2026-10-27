@@ -144,7 +144,12 @@ function privacyReport(hits, lead) {
     privacy.describeHits(hits).map((l) => "  " + l).join("\n") +
     "\n\nRemove them from the page (use made-up values like user@example.com), mark the page" +
     '\n"private: true" to keep it off the website, or, if a value is safe to publish, list it' +
-    "\nunder allow: in docs/hypatia.yml."
+    "\nunder allow: in docs/hypatia.yml." +
+    (hits.some((h) => h.file.toLowerCase() === "readme.md") ? "\nREADME.md is the home page and is always published: edit it instead." : "") +
+    (hits.some((h) => !h.page)
+      ? "\nSite data (commit messages, branch names, issue titles) is published too. Git history can't be edited" +
+        "\nsafely, so list a value already in it under allow: if it is safe, and keep it out of new ones."
+      : "")
   );
 }
 
