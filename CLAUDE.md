@@ -8,14 +8,16 @@ who's-working-on-what view.
 Being extracted from the wiki in ~/personal/go2-fusion: docs/wiki, scripts/wiki, site/,
 tools/oak-wiki, .github/workflows/wiki-*.yml, and .claude/skills/wiki-keeper.
 Milestone 1 moved the site, builder and local server here and ported them to Node.
-Milestone 2 (branch milestone-2) made them generic: the title, team and colors come from
+Milestone 2 made them generic: the title, team and colors come from
 the repo, git and GitHub. go2-fusion itself is unchanged and still builds as before from
 its docs/team.yml.
-Milestone 3 (branch milestone-3) added `hypatia init` and the privacy guard.
+Milestone 3 added `hypatia init` and the privacy guard.
 
 ## Status
 
-- Early scaffold, local only (no GitHub remote yet).
+- Public on GitHub (maxhawksby/hypatia), MIT. Published history starts at one clean commit;
+  the full local history is in the `history-backup` branch (never push it: it holds the
+  original go2-fusion copy with teammates' details).
 - Brief: docs/BRIEF.md (the spec; milestones 1-5).
 - Stack: Node 18+, built-ins only, no dependencies. `npm test` runs everything.
 
