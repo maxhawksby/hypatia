@@ -1,11 +1,11 @@
-/* Oak workspace v3: sidebar (page tree, people, recent), quick switcher,
+/* Hypatia wiki: sidebar (page tree, people, recent), quick switcher,
    reading pane (page, connections, ask box, or a teammate's view) and a fixed
    2D map. Pages are grey; a page takes a teammate's color while they work on it.
    Data: graph.json (built by `hypatia serve` or `hypatia build`), else sample-graph.json. */
 (function () {
   "use strict";
 
-  const GREYS = ["#e6e6e6", "#9a9a9a", "#666666"];   // Oak, hubs, pages
+  const GREYS = ["#e6e6e6", "#9a9a9a", "#666666"];   // center page, hubs, pages
   const BG = "#161616";
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -38,7 +38,7 @@
       return r.json();
     });
   }
-  (window.OAK_GRAPH ? Promise.resolve(window.OAK_GRAPH) : getJSON("graph.json"))
+  (window.HYPATIA_GRAPH ? Promise.resolve(window.HYPATIA_GRAPH) : getJSON("graph.json"))
     .catch(() => getJSON("sample-graph.json").then((d) => Object.assign(d, { sample: true })))
     .then(start)
     .catch((err) => {
@@ -49,6 +49,8 @@
 
   function start(data) {
     D = normalize(data);
+    lastPage = D.center;
+    renderTitle();
     index();
     if (D.nodes.some((n) => typeof n.x !== "number" || typeof n.y !== "number")) layout();
     renderTree(); renderWork(); renderRecent(); renderPeopleList(); renderLegend(); renderDataNote();
@@ -57,6 +59,16 @@
     window.addEventListener("hashchange", route);
     route();
     restoreReading();
+  }
+
+  // the site's name, from the repo (README.md's first heading or its name)
+  function renderTitle() {
+    const b = $("home");
+    b.textContent = D.title;
+    b.title = "Open " + D.title;
+    document.title = D.title + " wiki";
+    $("graph").setAttribute("aria-label", "Map of the pages around " + D.title +
+      ". A page takes a teammate's color when they are working on it. Use the page list for keyboard navigation.");
   }
 
   // A live reload (hypatia serve) saves where you were reading just before it
@@ -77,6 +89,7 @@
     const arr = (x) => (Array.isArray(x) ? x : []);
     const out = {
       repo: d.repo || "", // owner/name on GitHub; empty when the repo is not on GitHub
+      title: d.title || "Wiki",
       branch: d.branch || "master",
       base: d.base || "master",
       published: d.published !== false && !!d.repo,
@@ -85,8 +98,10 @@
       people: arr(d.people), nodes: arr(d.nodes), edges: arr(d.edges),
       work: arr(d.work), questions: arr(d.questions), recent: arr(d.recent), branches: arr(d.branches),
     };
+    const center = d.center || (out.nodes.find((n) => n.depth === 0 || n.parent == null) || {}).id || "home";
+    out.center = center;
     out.nodes.forEach((n) => {
-      n.code = arr(n.code); n.markdown = n.markdown || ""; n.depth = n.depth ?? (n.id === "oak" ? 0 : 2);
+      n.code = arr(n.code); n.markdown = n.markdown || ""; n.depth = n.depth ?? (n.id === center ? 0 : 2);
       n.hub = n.hub || (n.depth === 1 ? n.id : null);
     });
     out.work.forEach((w) => { w.pages = arr(w.pages); w.assignees = arr(w.assignees); });
@@ -116,7 +131,7 @@
     const order = (parent, list) => list.sort((a, b) => pos(parent, a) - pos(parent, b) || a.title.localeCompare(b.title));
     const pos = (parent, n) => { const i = parent.markdown.indexOf(n.id + ".md"); return i < 0 ? 1e9 : i; };
     Object.keys(kids).forEach((id) => order(byId[id], kids[id]));
-    hubs = kids.oak ? kids.oak.filter((n) => n.depth === 1) : D.nodes.filter((n) => n.depth === 1);
+    hubs = kids[D.center] ? kids[D.center].filter((n) => n.depth === 1) : D.nodes.filter((n) => n.depth === 1);
   }
 
   // ---------- colors, people, scope ----------
@@ -140,7 +155,7 @@
     const s = new Set((people[pid] && people[pid].worked_on) || []);
     workOf(pid).forEach((w) => w.pages.forEach((p) => s.add(p)));
     branchesOf(pid).forEach((b) => b.pages.forEach((p) => s.add(p)));
-    s.delete("oak");
+    s.delete(D.center);
     return s;
   }
   const workByPage = {}, branchesByPage = {};
@@ -155,7 +170,7 @@
     (branchesByPage[id] || []).forEach((b) => { if (b.person && !out.includes(b.person)) out.push(b.person); });
     return out;
   }
-  const pagePerson = (id) => (id === "oak" ? null : pagePeople(id)[0] || null);
+  const pagePerson = (id) => (id === D.center ? null : pagePeople(id)[0] || null);
 
   // ---------- time ----------
   function rel(iso) {
@@ -263,8 +278,8 @@
       }
       return li;
     }
-    const oak = D.nodes.find((n) => n.depth === 0);
-    if (oak) tree.append(item(oak, 0));
+    const home = D.nodes.find((n) => n.depth === 0);
+    if (home) tree.append(item(home, 0));
     hubs.forEach((hb) => tree.append(item(hb, 1)));
     D.nodes.filter((n) => n.depth === 1 && !hubs.includes(n)).forEach((hb) => tree.append(item(hb, 1)));
   }
@@ -341,7 +356,7 @@
       personLinks[p.id] = b;
       ul.append(h("li", null, b));
     });
-    if (!D.people.length) ul.append(h("li", { class: "none" }, "No team file yet (docs/team.yml)."));
+    if (!D.people.length) ul.append(h("li", { class: "none" }, "Nobody yet. People show up here once they commit."));
     const tog = $("work-tog"), work = $("work");
     tog.addEventListener("click", () => {
       const show = tog.getAttribute("aria-expanded") !== "true";
@@ -353,7 +368,7 @@
     if (pre && people[pre] && !location.hash) history.replaceState(null, "", personHash(pre));
   }
   // map legend: one button per teammate; pressing one lights up their pages
-  let lastPage = "oak";
+  let lastPage = null;
   function renderLegend() {
     const el = $("legend");
     el.textContent = "";
@@ -497,14 +512,14 @@
   function setMap(show) {
     $("app").classList.toggle("no-map", !show);
     $("map-tog").setAttribute("aria-pressed", String(show));
-    store("oak.map", show ? "1" : "0");
+    store("hypatia.map", show ? "1" : "0");
     clampPanes();
   }
   function toggleMap() { setMap($("app").classList.contains("no-map")); }
   function setSide(show, quiet) {
     $("app").classList.toggle("no-side", !show);
     $("side-show").hidden = show;
-    store("oak.side", show ? "1" : "0");
+    store("hypatia.side", show ? "1" : "0");
     clampPanes();
     if (quiet) return;
     // keep keyboard focus on the button that brings it back
@@ -513,9 +528,9 @@
   function toggleSide() { setSide($("app").classList.contains("no-side")); }
   const paneW = (name) => parseFloat($("app").style.getPropertyValue("--" + name + "-w")) || null;
   function setPaneW(name, px) {
-    if (px == null) { $("app").style.removeProperty("--" + name + "-w"); store("oak." + name + "W", null); return; }
+    if (px == null) { $("app").style.removeProperty("--" + name + "-w"); store("hypatia." + name + "W", null); return; }
     $("app").style.setProperty("--" + name + "-w", Math.round(px) + "px");
-    store("oak." + name + "W", String(Math.round(px)));
+    store("hypatia." + name + "W", String(Math.round(px)));
   }
   // keep the reader at least READER_MIN wide when the window shrinks
   function clampPanes() {
@@ -560,9 +575,9 @@
     });
   }
   function setupPanes() {
-    ["side", "map"].forEach((name) => { const w = parseFloat(store("oak." + name + "W")); if (w) $("app").style.setProperty("--" + name + "-w", w + "px"); });
-    setSide(store("oak.side") !== "0", true);
-    setMap(store("oak.map") !== "0");
+    ["side", "map"].forEach((name) => { const w = parseFloat(store("hypatia." + name + "W")); if (w) $("app").style.setProperty("--" + name + "-w", w + "px"); });
+    setSide(store("hypatia.side") !== "0", true);
+    setMap(store("hypatia.map") !== "0");
     $("map-tog").addEventListener("click", toggleMap);
     $("side-hide").addEventListener("click", () => setSide(false));
     $("side-show").addEventListener("click", () => setSide(true));
@@ -649,8 +664,8 @@
     const [id, anchor] = raw.split("/");
     closeDrawer();
     if (id === "people" && anchor && people[anchor]) { openPerson(people[anchor]); return; }
-    const oak = D.nodes.find((n) => n.depth === 0) || D.nodes[0];
-    const n = byId[id] || oak;
+    const home = D.nodes.find((n) => n.depth === 0) || D.nodes[0];
+    const n = byId[id] || home;
     if (!n) return;
     if (current !== n) openPage(n);
     if (pendingFind) { const q = pendingFind; pendingFind = null; findInPage(q); return; }
@@ -675,7 +690,7 @@
     lastPage = n.id;
     viewedPerson = null;
     setMode(null);
-    document.title = n.depth === 0 ? "Oak Workspace" : n.title + " - Oak Workspace";
+    document.title = n.depth === 0 ? D.title + " wiki" : n.title + " - " + D.title + " wiki";
     Object.entries(treeLinks).forEach(([id, el]) => { if (id === n.id) el.setAttribute("aria-current", "page"); else el.removeAttribute("aria-current"); });
     if (n.hub && n.depth > 1) setOpen(n.hub, true);
     if (n.depth === 1) setOpen(n.id, true);
@@ -699,7 +714,7 @@
     viewedPerson = p;
     clearFind();
     setMode(p.id);
-    document.title = p.name + " - Oak Workspace";
+    document.title = p.name + " - " + D.title + " wiki";
     Object.values(treeLinks).forEach((el) => el.removeAttribute("aria-current"));
     const pl = personLinks[p.id]; if (pl && !window.matchMedia("(max-width: 900px)").matches) pl.scrollIntoView({ block: "nearest" });
 
@@ -719,7 +734,8 @@
       h("span", { class: "pv-dot", "aria-hidden": "true" }),
       h("div", null,
         h("h1", null, p.name),
-        h("p", { class: "pv-focus" }, h("span", { class: "pv-label" }, "Current focus"), p.focus || "TODO(" + p.id + "): add a focus line in docs/team.yml"),
+        p.focus ? h("p", { class: "pv-focus" }, h("span", { class: "pv-label" }, "Current focus"), p.focus)
+          : h("p", { class: "pv-focus none" }, "No focus line yet. Add one in docs/hypatia.yml."),
         p.github ? h("a", { class: "pv-gh", href: "https://github.com/" + p.github, target: "_blank", rel: "noopener" }, "@" + p.github + " on GitHub") : null)));
 
     // Working on now
@@ -907,13 +923,13 @@
       const full = resolvePath(n.path || "", path);
       const page = byPath[full];
       if (page) { a.setAttribute("href", pageHash(page.id, anchor)); a.classList.add("internal"); return; }
-      a.href = GH() + "/blob/" + (D.published ? D.branch : "master") + "/" + full + (anchor ? "#" + anchor : "");
+      a.href = GH() + "/blob/" + (D.published ? D.branch : D.base) + "/" + full + (anchor ? "#" + anchor : "");
       a.target = "_blank"; a.rel = "noopener";
     });
     el.querySelectorAll("img[src]").forEach((img) => {
       const src = img.getAttribute("src");
       if (!/^[a-z][a-z0-9+.-]*:/i.test(src) && !src.startsWith("//")) {
-        img.src = GH() + "/raw/" + (D.published ? D.branch : "master") + "/" + resolvePath(n.path || "", src);
+        img.src = GH() + "/raw/" + (D.published ? D.branch : D.base) + "/" + resolvePath(n.path || "", src);
       }
       img.loading = "lazy";
     });
@@ -930,10 +946,18 @@
   }
 
   // ---------- ask box ----------
+  // What you type in the Ask box belongs to the page you typed it on: another
+  // page starts empty, and coming back brings your words back.
+  const drafts = {};
+  function saveDraft() {
+    if (current) drafts[current.id] = { text: $("ask-input").value, quote: ask.quote };
+  }
   function resetAsk() {
     ask.locked = false;
-    setQuote("");
-    setAskMode(guessMode($("ask-input").value.trim()));
+    const d = drafts[current.id] || { text: "", quote: "" };
+    $("ask-input").value = d.text;
+    setQuote(d.quote);
+    setAskMode(guessMode(d.text.trim()));
     $("answer").hidden = true;
     $("answer").textContent = "";
     document.querySelectorAll(".ask-quick .chip").forEach((c) => c.setAttribute("aria-pressed", "false"));
@@ -997,11 +1021,12 @@
     document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
     const n = current;
     $("ask-hint").textContent = mode === "edit"
-      ? "Your agent edits " + (n && n.path ? n.path : "this page") + " on a new branch, runs the wiki check and opens a pull request for you to review."
+      ? "Your agent edits " + (n && n.path ? n.path : "this page") + " on a new branch, runs hypatia check and opens a pull request for you to review."
       : "Your agent reads this page" + (n && n.code.length ? " and its code" : "") + ", then answers in plain English.";
   }
   function setQuote(text) {
     ask.quote = text;
+    saveDraft();
     $("ask-quote").hidden = !text;
     $("ask-quote-text").textContent = text;
   }
@@ -1030,9 +1055,10 @@
       if (pages.length) lines.push("", "Pages I mentioned: " + pages.map((p) => p.title + " (" + fileOf(p) + ")").join(", ") +
         ". To connect pages, add a normal relative link inside a sentence that says how they connect, for example [" + pages[0].title + "](" + fileOf(pages[0]).split("/").pop() + ").");
       if (code.length) lines.push("", "This page documents " + code.join(", ") + "; check the code before changing any fact.");
-      lines.push("", "Rules: follow AGENTS.md and .claude/skills/wiki-keeper/SKILL.md. Plain English, never invent facts (mark unknowns TODO(owner)). " +
-        "Run python3 scripts/wiki/check_wiki.py until it passes. Work on a new branch from the latest " + D.base + ", commit with a message that starts with the page it touches, " +
-        "open a pull request using .github/pull_request_template.md, and show me the diff.");
+      lines.push("", "Rules: follow the repo's agent instructions and its wiki-keeper skill if it has one (.claude/skills/wiki-keeper/SKILL.md). " +
+        "Plain English, never invent facts (mark unknowns TODO(owner)), and never put real people's records, emails or keys on a page. " +
+        "Run `hypatia check` until it passes. Work on a new branch from the latest " + D.base + ", commit with a message that starts with the page it touches, " +
+        "open a pull request (with the repo's pull request template if it has one), and show me the diff.");
     } else {
       lines.push("In " + where + ", read " + fileOf(n) + (code.length ? " and the code in " + code.join(", ") : "") +
         (pages.length ? ", and also " + pages.map(fileOf).join(", ") : "") + ", then answer in plain English:", "", plainQ || "<your question>");
@@ -1059,7 +1085,7 @@
       const n = current;
       const link = D.published && n.path ? blobUrl(n.path) : fileOf(n) + " (branch " + D.branch + ")";
       const body = "Question about the **" + n.title + "** page.\n\nPage: " + link + "\n\n" +
-        (ask.quote ? "> " + ask.quote.replace(/\n+/g, " ") + "\n\n" : "") + q + "\n\n_Asked from the Oak workspace._";
+        (ask.quote ? "> " + ask.quote.replace(/\n+/g, " ") + "\n\n" : "") + q + "\n\n_Asked from the " + D.title + " wiki._";
       const url = GH() + "/issues/new?title=" + encodeURIComponent(q) + "&labels=" + encodeURIComponent("question,wiki:" + n.id) + "&body=" + encodeURIComponent(body);
       window.open(url, "_blank", "noopener");
       toast("Opened GitHub in a new tab. Press Submit there to save your question.");
@@ -1083,7 +1109,7 @@
     });
 
     // guess question vs edit from the words, until the reader picks one
-    input.addEventListener("input", () => { if (!ask.locked) setAskMode(guessMode(input.value.trim())); suggest(); });
+    input.addEventListener("input", () => { saveDraft(); if (!ask.locked) setAskMode(guessMode(input.value.trim())); suggest(); });
 
     // [[ suggests pages; Enter or Tab inserts [[Title]]
     const pages = $("ask-pages");
@@ -1119,6 +1145,7 @@
       const head = input.value.slice(0, p.start) + "[[" + n.title + "]] ";
       input.value = head + after;
       input.setSelectionRange(head.length, head.length);
+      saveDraft();
       closePages();
       if (!ask.locked) setAskMode(guessMode(input.value.trim()));
     }
@@ -1188,7 +1215,7 @@
     $("side-open").addEventListener("click", () => { openDrawer(); $("side-close").focus(); });
     $("side-close").addEventListener("click", () => { closeDrawer(); $("side-open").focus(); });
     $("scrim").addEventListener("click", closeDrawer);
-    $("home").addEventListener("click", () => go("oak"));
+    $("home").addEventListener("click", () => go(D.center));
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
   }
 
@@ -1291,7 +1318,7 @@
       const pf = filterPerson ? personPages(filterPerson) : null;
       const pcol = filterPerson ? personColor(filterPerson) : null;
       const isLit = (id) => (pf ? pf.has(id) || id === cur : lit.has(id));
-      const dimAll = !!pf || (cur && cur !== "oak");
+      const dimAll = !!pf || (cur && cur !== D.center);
 
       // edges: grey; the current page's links light up, a teammate's in their color
       ctx.lineCap = "round";
@@ -1327,11 +1354,11 @@
         ctx.globalAlpha = 1;
       });
 
-      // labels: Oak and hubs always, pages when zoomed in or connected
+      // labels: the center page and hubs always, pages when zoomed in or connected
       const showPages = cam.k >= fitK * 1.55;
       ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.lineJoin = "round";
       order.slice().reverse().forEach((n) => {
-        const hot = n.id === cur || hover === n || peeked === n || (pf ? pf.has(n.id) : lit.has(n.id) && cur !== "oak");
+        const hot = n.id === cur || hover === n || peeked === n || (pf ? pf.has(n.id) : lit.has(n.id) && cur !== D.center);
         if (n.depth === 2 && !showPages && !hot) return;
         const [x, y] = toScreen(n.x, n.y), r = radius(n);
         const on = !dimAll || isLit(n.id) || hover === n || peeked === n;
