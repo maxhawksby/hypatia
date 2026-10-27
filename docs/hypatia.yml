@@ -1,6 +1,6 @@
 title: Hypatia
 # The made-up support address in the example on the Configuration page.
-allow: [help@larkspur.dev]
+allow: [help@larkspur.dev, maxwellhawksby@gmail.com]
 people:
   - github: maxhawksby
     name: Max Hawksby
