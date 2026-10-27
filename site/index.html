@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Oak workspace. Open it locally from inside the repo:
+  Hypatia wiki. Open it locally from inside the repo:
     hypatia serve   (builds the data, serves http://localhost:4410, live-reloads)
   Without graph.json the app loads
   sample-graph.json (fake people and work).
@@ -9,8 +9,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Oak Workspace</title>
-  <meta name="description" content="Team 48's workspace for Oak, the Go2 robot dog: pages, a map of how they connect, and who is working on what.">
+  <title>Wiki</title>
+  <meta name="description" content="The team wiki: pages, a map of how they connect, and who is working on what.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
@@ -22,7 +22,7 @@
     <!-- Left: pages, people, recent -->
     <aside class="side" id="side" aria-label="Workspace">
       <div class="side-head">
-        <button class="brand" id="home" type="button" title="Open Oak">Oak</button>
+        <button class="brand" id="home" type="button" title="Open the home page">Wiki</button>
         <button class="icon-btn only-wide" id="side-hide" type="button" aria-label="Hide sidebar" title="Hide sidebar ([)">
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M6 3v10"/></svg>
         </button>
@@ -87,7 +87,7 @@
       </div>
       <div class="reader-scroll" id="reader-scroll">
         <div class="page" id="page">
-          <article class="md" id="content"><p class="loading">Loading the workspace...</p></article>
+          <article class="md" id="content"><p class="loading">Loading the wiki...</p></article>
           <section class="connections" id="connections" aria-labelledby="h-conn"></section>
           <section class="backlinks" id="backlinks" aria-labelledby="h-back"></section>
           <section class="ask" id="ask" aria-labelledby="h-ask">
@@ -138,7 +138,7 @@
       <div class="sizer" id="size-map" role="separator" aria-orientation="vertical" aria-label="Resize the map" tabindex="0" title="Drag to resize, double-click to reset"></div>
       <h2 class="sr-only" id="h-map">Map</h2>
       <div class="map-stage" id="stage">
-        <canvas id="graph" role="img" aria-label="Map of the pages around Oak. A page takes a teammate's color when they are working on it. Use the page list for keyboard navigation."></canvas>
+        <canvas id="graph" role="img" aria-label="Map of the pages. A page takes a teammate's color when they are working on it. Use the page list for keyboard navigation."></canvas>
         <div class="map-tip" id="tip" hidden></div>
         <div class="map-zoom" role="group" aria-label="Map zoom">
           <button type="button" class="icon-btn" id="zoom-in" aria-label="Zoom in">+</button>

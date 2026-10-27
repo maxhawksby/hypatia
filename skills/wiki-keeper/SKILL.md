@@ -1,21 +1,34 @@
 ---
 name: wiki-keeper
-description: Keep the team wiki (README.md + docs/wiki/) true to the code. Use whenever code under src/, host_tools/ or docker/ changes, when a package is added or removed, before opening a pull request, when starting a task (to claim it on the wiki graph), when someone asks to update or check the wiki, to answer wiki questions, or to ask a teammate for review.
+description: Keep the team wiki (README.md + {{WIKI_DIR}}/) true to the code. Use whenever code a wiki page documents changes, when a folder or program is added or removed, before opening a pull request, when starting a task (to claim it on the wiki graph), when someone asks to update or check the wiki, to answer wiki questions, or to ask a teammate for review.
 ---
+
+<!--
+  Hypatia template. `hypatia install` (milestone 3) fills these in:
+    {{REPO_SLUG}}       owner/name on GitHub
+    {{DEFAULT_BRANCH}}  the branch new work starts from (main, master, ...)
+    {{WIKI_DIR}}        the folder of wiki pages (docs/wiki)
+    {{CONFIG_FILE}}     the optional Hypatia config (docs/hypatia.yml)
+    {{HYPATIA}}         how to run Hypatia in this repo (e.g. npx hypatia)
+-->
 
 # Wiki keeper
 
-The wiki is a graph: README.md is the center page "Oak", 7 hub pages hang off it, and each program has one page under a hub. Pages live in `docs/wiki/<slug>.md`. A pull request check (`.github/workflows/wiki-check.yml`) fails when the wiki falls behind the code, so keep it current as you go.
+The wiki is a graph: README.md is the center page, hub pages hang off it, and each part of the code has one page under a hub. Pages live in `{{WIKI_DIR}}/<slug>.md`. The site (`{{HYPATIA}} serve`) shows the map, the pages, and who is working on what.
 
 Every page starts with front matter:
 
 ```
 ---
-title: Object detection
-parent: senses                    # hub pages use "oak"
-code: [src/object_detection/**]   # optional: the repo paths this page documents
+title: Search
+parent: web-app               # hub pages use "home"
+code: [web/src/search/**]     # optional: the repo paths this page documents
 ---
 ```
+
+## Privacy (always)
+
+Pages describe how the code works. Never put real records, people's personal details, email addresses, phone numbers, student or customer IDs, passwords or API keys on a page, not even as examples. Use made-up placeholders (`user@example.com`, `<api-key>`).
 
 ## When starting a task
 
@@ -28,21 +41,21 @@ If `gh` is not signed in, tell the human the exact commands instead of skipping 
 
 ## Committing
 
-Write every commit message as one short sentence that says exactly what changed, starting with the part of Oak it touches (`Auto mapper: skip frontiers it can't reach`). Never `fix`, `wip` or `updates`. The wiki shows these messages next to each person's branch, so they are how teammates see what you're working on.
+Write every commit message as one short sentence that says exactly what changed, starting with the part of the project it touches (`Search: rank exact names first`). Never `fix`, `wip` or `updates`. The wiki shows these messages next to each person's branch, so they are how teammates see what you're working on.
 
 ## Before opening a pull request (or whenever code changed)
 
-1. `git fetch origin`, then run `python3 scripts/wiki/check_wiki.py` (it compares against origin/master and includes uncommitted work).
-2. For each page it flags, read the diff for that page's code (`git diff origin/master...HEAD -- <paths>`) and update the page in plain English a college freshman would follow:
-   - what the program does for Oak,
-   - what it uses (topics, sensors, other programs, hardware),
+1. `git fetch origin`, then list what changed: `git diff --name-only origin/{{DEFAULT_BRANCH}}...HEAD` (plus uncommitted work: `git status --short`).
+2. Find the pages whose `code:` paths cover those files, read the diff for that code (`git diff origin/{{DEFAULT_BRANCH}}...HEAD -- <paths>`) and update each page in plain English a college freshman would follow:
+   - what that part does for the project,
+   - what it uses (other parts, services, data, hardware),
    - how it breaks (known failure modes and what they look like).
    Not code internals: no function names or line-by-line walkthroughs.
-3. New package in `src/`: create `docs/wiki/<slug>.md` with title, parent (its hub) and `code: [src/<package>/**]`, then link it from the hub page.
-   Removed package: delete its page and its link from the hub.
+3. New part of the code: create `{{WIKI_DIR}}/<slug>.md` with title, parent (its hub) and `code:` paths, then link it from the hub page.
+   Removed part: delete its page and its link from the hub.
 4. Never invent facts. If you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>` instead of guessing.
 5. Keep pages short: a few short paragraphs or bullets. Link to other pages rather than repeating them.
-6. Re-run the checker until it prints "Wiki check passed".
+6. Run `{{HYPATIA}} check` until it prints "Wiki check passed".
 
 If a change truly does not affect what any page says (a rename, a comment, a refactor with identical behavior), add this line to the pull request description instead of editing the page:
 
@@ -55,7 +68,7 @@ wiki: no change needed - <reason>
 Teammates ask questions on wiki pages from the site ("Ask the team"); each one is a GitHub issue labelled `question` and `wiki:<slug>`.
 
 1. When asked to answer questions, list the open ones for the pages you know: `gh issue list --label question` (narrow with `--label wiki:<slug>`), then `gh issue view <n>`.
-2. Read the page and its code, then answer in plain English a newcomer can follow, as a comment on the issue: `gh issue comment <n> --body "..."`. Link the wiki page and the code on GitHub (`https://github.com/maxhawksby/go2-fusion/blob/master/<path>`).
+2. Read the page and its code, then answer in plain English a newcomer can follow, as a comment on the issue: `gh issue comment <n> --body "..."`. Link the wiki page and the code on GitHub (`https://github.com/{{REPO_SLUG}}/blob/{{DEFAULT_BRANCH}}/<path>`).
 3. If the answer belongs on the page (others will ask it too), update the page in the same pull request as any code change, or in a small wiki-only pull request.
 4. Never guess. If you don't know, say what you checked and who might know (the page's owner), and leave the question open.
 
@@ -63,22 +76,18 @@ A comment from someone other than the asker marks the question answered on the s
 
 ## Asking for review
 
-Open the pull request (`gh pr create`) and fill the template in `.github/pull_request_template.md`, a line or two each in plain English:
+Open the pull request (`gh pr create`), using the repo's pull request template if it has one. Either way, say in a line or two each, in plain English:
 
-- **Who**: your name, and who should review.
 - **What**: what the change does, in one sentence.
-- **Why**: why Oak or the team needs it.
+- **Why**: why the project or the team needs it.
 - **Before** and **After**: what happened before, what happens now.
 - **How to test**: steps a teammate can follow.
 - **Wiki**: the page you updated, or `wiki: no change needed - <reason>` on its own line.
 
-Request a teammate (`gh pr create --reviewer <login>` or `gh pr edit <n> --add-reviewer <login>`; logins are in `docs/team.yml`). Label nothing extra: the site shows the review request, and the post to Discord #feature-revisions (Who, What, Why, Before, After, wiki pages, the link, an @mention of the reviewer) happens automatically. Drafts post when marked ready for review.
+Request a teammate: `gh pr create --reviewer <login>` or `gh pr edit <n> --add-reviewer <login>`. The People list on the site shows who is on the team and their GitHub logins (names, colors and focus lines can be set in `{{CONFIG_FILE}}`). Label nothing extra: the site shows the review request.
 
-## What the checker checks
+## What `{{HYPATIA}} check` checks
 
-- every page has a title and a parent that exists, and every link to a .md file works;
-- following parents from any page reaches README.md (no orphans, no loops);
-- pages whose `code:` paths changed were also changed (unless the pull request has the line above);
-- every folder in `src/` is claimed by some page's `code:`.
-
-Run the checker's own tests with `python3 -m unittest discover -s scripts/wiki/tests`.
+- every page has a title and a parent that exists, and page names are lowercase words joined by '-';
+- every link to a .md file works;
+- following parents from any page reaches README.md (no orphans, no loops).

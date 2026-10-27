@@ -1,4 +1,4 @@
-/* Oak workspace: quiet and neutral. Greys for structure, one sage accent for
+/* Hypatia wiki: quiet and neutral. Greys for structure, one sage accent for
    links and focus, and teammate colors as the only other color: a page or
    dot is colored when someone is working on it. */
 :root {
@@ -345,6 +345,7 @@ mark.hit.cur { background: #ffd666; color: #191919; box-shadow: 0 0 0 2px rgba(2
 .md .pv-head h1 { margin: 0 0 6px; }
 .pv-label { display: block; font-size: 12px; color: var(--muted); }
 .md .pv-focus { margin: 0 0 4px; font-size: 15.5px; color: var(--text); }
+.md .pv-focus.none { font-size: 14px; color: var(--muted); }
 .md a.pv-gh { font-size: 13px; color: var(--muted); }
 .pv-sec { margin-top: 36px; }
 .md .pv-sec h2 { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 500; color: var(--muted); margin: 0 0 8px; letter-spacing: 0; }

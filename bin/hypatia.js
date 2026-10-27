@@ -3,6 +3,7 @@
 //
 //   hypatia serve [--port <n>] [--no-open]   open this repo's wiki locally, with live reload
 //   hypatia build [--out <folder>]           write the site and its data to a folder (default _site)
+//   hypatia check                            check the pages (links, parents) without writing anything
 //
 // Run it from anywhere inside the repo; it works on the repo's top folder.
 "use strict";
@@ -19,13 +20,19 @@ Usage, from inside a repo:
   hypatia serve [--port <number>] [--no-open]
       Builds the wiki for this repo, serves it at http://localhost:4410/,
       opens your browser and reloads it when README.md, docs/wiki/ or
-      docs/team.yml change. Stop it with Ctrl+C.
+      docs/hypatia.yml change. Stop it with Ctrl+C.
   hypatia build [--out <folder>]
       Writes the site and its data (graph.json, graph.js) to a folder,
       _site by default, ready for GitHub Pages or any static server.
+  hypatia check
+      Checks the wiki pages (front matter, parents, links) and says what to
+      fix. Writes nothing; exits with 1 when a page has a problem.
 
-GitHub data (who is working on what, questions) is read when GITHUB_TOKEN is
-set or the GitHub CLI is signed in (gh auth login).`;
+The team comes from git history, and from GitHub when it can be read. The
+optional docs/hypatia.yml sets the title, names, colors and focus lines.
+
+GitHub data (who is working on what, questions, logins) is read when
+GITHUB_TOKEN is set or the GitHub CLI is signed in (gh auth login).`;
 
 // The repo's top folder, or the current folder outside git.
 function repoRoot(cwd) {
@@ -78,6 +85,27 @@ async function build(root, argv) {
   return 0;
 }
 
+// `hypatia check`: the same checks as a build, nothing written, no GitHub.
+async function check(root, argv) {
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log("hypatia check");
+    return 0;
+  }
+  if (argv.length) {
+    console.error(`Unknown option "${argv[0]}". hypatia check takes no options.`);
+    return 2;
+  }
+  try {
+    const graph = await buildGraph({ root, token: null, warn: (msg) => console.error(`hypatia: ${msg}`) });
+    console.log(`Wiki check passed: ${graph.nodes.length} pages, ${graph.edges.length} links and parents.`);
+    return 0;
+  } catch (err) {
+    if (!(err instanceof WikiError)) throw err;
+    console.error(`hypatia: ${err.message}`);
+    return 1;
+  }
+}
+
 async function main(argv) {
   const [command, ...rest] = argv;
   if (!command || command === "--help" || command === "-h" || command === "help") {
@@ -87,6 +115,7 @@ async function main(argv) {
   const root = repoRoot(process.cwd());
   if (command === "serve") return serve(root, rest);
   if (command === "build") return build(root, rest);
+  if (command === "check") return check(root, rest);
   console.error(`Unknown command "${command}".\n\n${HELP}`);
   return 2;
 }
