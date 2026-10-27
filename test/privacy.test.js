@@ -40,15 +40,15 @@ const SECRETS = [
   ["Stripe secret key", "STRIPE=sk_" + "live_" + r("x9", 12), "sk_" + "live_" + r("x9", 12)],
   ["Stripe secret key", "whsec_" + r("Ab1", 10), "whsec_" + r("Ab1", 10)],
   ["Supabase secret key", "sb_secret_" + r("Zz9", 8), "sb_secret_" + r("Zz9", 8)],
-  ["JSON web token", "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c2lnbmF0dXJlLWhlcmU", "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c2lnbmF0dXJlLWhlcmU"],
+  ["JSON web token", "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9." + "eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c2lnbmF0dXJlLWhlcmU", "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c2lnbmF0dXJlLWhlcmU"],
   ["OpenAI API key", "OPENAI_API_KEY=sk-proj-" + r("Ab3", 14), "sk-proj-" + r("Ab3", 14)],
   ["Anthropic API key", "sk-ant-api03-" + r("Xy7", 10), "sk-ant-api03-" + r("Xy7", 10)],
   ["Slack token", "xoxb-" + r("12", 6) + "-abcdef", "xoxb-" + r("12", 6) + "-abcdef"],
   ["Google API key", "AIza" + r("Sy1", 11) + "ab", "AIza" + r("Sy1", 11) + "ab"],
   ["private key", "-----BEGIN OPENSSH PRIVATE KEY-----", "-----BEGIN OPENSSH PRIVATE KEY-----"],
   ["private key", "-----BEGIN RSA PRIVATE KEY-----", "-----BEGIN RSA PRIVATE KEY-----"],
-  ["connection string with a password", "DATABASE_URL=postgres://app:hunter2pw@db.abcd.supabase.co:5432/postgres", "hunter2pw"],
-  ["connection string with a password", "mongodb+srv://admin:S3cretPass@cluster0.mongodb.net/app", "S3cretPass"],
+  ["connection string with a password", "DATABASE_URL=postgres://app:" + "hunter2pw@db.abcd.supabase.co:5432/postgres", "hunter2pw"],
+  ["connection string with a password", "mongodb+srv://admin:" + "S3cretPass@cluster0.example.net/app", "S3cretPass"],
 ];
 
 for (const [kind, line, value] of SECRETS) {
