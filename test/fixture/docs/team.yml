@@ -1,0 +1,15 @@
+# A made-up team for the tests.
+people:
+  - id: ana
+    name: Ana
+    github: ana-gh
+    color: "#ff4d5e"   # red
+    discord_id: ""
+    focus: Object detection
+    past: [senses]
+
+  - id: ben
+    name: Ben Carter
+    github: bencarter
+    color: "#5aa9ff"
+    focus: Driving

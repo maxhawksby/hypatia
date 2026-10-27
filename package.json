@@ -1,0 +1,23 @@
+{
+  "name": "hypatia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A graph-style team wiki for any git repo, with a who's-working-on-what view.",
+  "license": "MIT",
+  "bin": {
+    "hypatia": "bin/hypatia.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "site",
+    "skills",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
