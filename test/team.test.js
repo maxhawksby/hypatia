@@ -17,8 +17,8 @@ const log = (...rows) => rows.map(([author, email, n], i) => ({ sha: "sha" + i, 
 const COMMITS = log(
   ["Max Hawksby", "max@example.com", 1],
   ["Maxwell Hawksby", "162082966+max-gh@users.noreply.github.com", 2],
-  ["LuisM23", "128239393+LuisMend12@users.noreply.github.com", 3],
-  ["LuisMend12", "128239393+LuisMend12@users.noreply.github.com", 4],
+  ["SamR23", "4242+SamRivera9@users.noreply.github.com", 3],
+  ["SamRivera9", "4242+SamRivera9@users.noreply.github.com", 4],
   ["jevgome", "jev@example.com", 5],
   ["dependabot[bot]", "49699333+dependabot[bot]@users.noreply.github.com", 6],
   ["Claude", "noreply@anthropic.com", 7],
@@ -34,7 +34,7 @@ test("team from git: one person per author, identities joined, bots left out", (
   const got = people.map((p) => [p.id, p.name, p.github, p.commits]);
   assert.deepStrictEqual(got, [
     ["max-hawksby", "Max Hawksby", "max-gh", 3], // two names, two emails, one person
-    ["luismend12", "LuisMend12", "LuisMend12", 2], // the noreply email gives the login, used as the name
+    ["samrivera9", "SamRivera9", "SamRivera9", 2], // the noreply email gives the login, used as the name
     ["jevgome", "jevgome", "", 1],
   ]);
 });
@@ -120,8 +120,8 @@ const CONFIG = `\
 title: Acme   # the site title
 exclude: [jevgome]
 people:
-  - github: LuisMend12
-    name: Luis
+  - github: SamRivera9
+    name: Sam
     color: "#b5e61d"
     focus: Auto mapper
   - id: max
@@ -135,7 +135,7 @@ test("config: title, exclude list and people", () => {
   const c = team.parseConfig(CONFIG);
   assert.deepStrictEqual([c.title, c.onlyListed, c.exclude], ["Acme", false, ["jevgome"]]);
   assert.deepStrictEqual(c.people.map((p) => [p.id, p.name, p.github, p.color, p.past]), [
-    ["", "Luis", "LuisMend12", "#b5e61d", []],
+    ["", "Sam", "SamRivera9", "#b5e61d", []],
     ["max", "Max", "", "", ["maps"]],
     ["", "Robin", "", "", []],
   ]);
@@ -147,8 +147,8 @@ test("config: overrides names, colors and focus, leaves people out, and keeps ev
   const auto = team.groupIdentities(team.gitIdentities(COMMITS));
   const people = team.resolveTeam(team.parseConfig(CONFIG), auto);
   const by = Object.fromEntries(people.map((p) => [p.id, p]));
-  assert.deepStrictEqual(people.map((p) => p.id), ["luis", "max", "robin"]); // config order; jevgome excluded
-  assert.deepStrictEqual([by.luis.name, by.luis.github, by.luis.color, by.luis.focus], ["Luis", "LuisMend12", "#b5e61d", "Auto mapper"]);
+  assert.deepStrictEqual(people.map((p) => p.id), ["sam", "max", "robin"]); // config order; jevgome excluded
+  assert.deepStrictEqual([by.sam.name, by.sam.github, by.sam.color, by.sam.focus], ["Sam", "SamRivera9", "#b5e61d", "Auto mapper"]);
   assert.deepStrictEqual([by.max.github, by.max.past], ["max-gh", ["maps"]]); // matched by first name, login from git
   assert.strictEqual(by.robin.commits, 0); // listed, no commits yet: still on the team
   assert.ok(team.PALETTE.includes(by.max.color) && team.PALETTE.includes(by.robin.color));
@@ -161,7 +161,7 @@ test("config: only_listed keeps just the listed people; the older docs/team.yml 
   assert.deepStrictEqual(listed.map((p) => p.id), ["max"]);
   assert.strictEqual(team.parseConfig("people:\n  - id: a\n", { legacy: true }).onlyListed, true);
   assert.strictEqual(team.parseConfig("only_listed: false\npeople:\n  - id: a\n", { legacy: true }).onlyListed, false);
-  assert.deepStrictEqual(team.resolveTeam(NO_CONFIG, auto).map((p) => p.id), ["max-hawksby", "luismend12", "jevgome"]);
+  assert.deepStrictEqual(team.resolveTeam(NO_CONFIG, auto).map((p) => p.id), ["max-hawksby", "samrivera9", "jevgome"]);
 });
 
 test("config: docs/hypatia.yml wins over docs/team.yml, and a bad color is replaced", () =>

@@ -24,9 +24,9 @@ people:
     focus: Computer vision - YOLO
     past: [object-detection]
 
-  - id: luis
-    name: Luis
-    github: LuisMend12
+  - id: sam
+    name: Sam
+    github: SamRivera9
     color: "#b5e61d"
     focus: Auto mapper
 `;
@@ -102,7 +102,7 @@ test("globs: * does not cross folders, ** does, a plain folder covers what is in
 });
 
 test("people: parse the team list", () => {
-  assert.deepStrictEqual(PEOPLE.map((p) => p.id), ["max", "luis"]);
+  assert.deepStrictEqual(PEOPLE.map((p) => p.id), ["max", "sam"]);
   assert.strictEqual(PEOPLE[0].color, "#ff4d5e");
   assert.strictEqual(PEOPLE[0].focus, "Computer vision - YOLO");
   assert.deepStrictEqual(Object.keys(PEOPLE[1]).sort(), ["color", "focus", "github", "id", "name", "past"]);
@@ -118,28 +118,28 @@ test("people: contributions by commit count", () => {
     voice: { file: wiki("voice"), code: ["src/voice/**"] },
   });
   const c = (author, email, ...files) => ({ author, email, files });
-  const luis = "128239393+LuisMend12@users.noreply.github.com";
+  const sam = "4242+SamRivera9@users.noreply.github.com";
   const commits = [
-    c("LuisM23", luis, "src/lidar/a.py", "README.md"),
-    c("LuisMend12", luis, "src/lidar/b.py"),
-    c("LuisMend12", luis, "docs/wiki/slam.md"), // wiki edit: not code work
-    c("LuisMend12", luis, "src/voice/README.md"), // docs next to the code: not code work either
-    c("LuisMend12", luis, "slam/old_layout.py"), // from before the folder moved: still counts
+    c("SamR23", sam, "src/lidar/a.py", "README.md"),
+    c("SamRivera9", sam, "src/lidar/b.py"),
+    c("SamRivera9", sam, "docs/wiki/slam.md"), // wiki edit: not code work
+    c("SamRivera9", sam, "src/voice/README.md"), // docs next to the code: not code work either
+    c("SamRivera9", sam, "slam/old_layout.py"), // from before the folder moved: still counts
     c("Max Hawksby", "max@example.com", "docs/wiki/voice.md", "src/voice/x.py"),
     c("Stranger", "s@example.com", "src/slam/x.py"),
   ];
   const got = bg.contributions(commits, pages, PEOPLE, CTX);
-  assert.deepStrictEqual(got.get("luis"), ["lidar", "slam"]); // 2 commits, then 1; the center page left out
+  assert.deepStrictEqual(got.get("sam"), ["lidar", "slam"]); // 2 commits, then 1; the center page left out
   assert.deepStrictEqual(got.get("max"), ["voice"]); // one commit, counted once
-  assert.deepStrictEqual(bg.contributions(commits, pages, PEOPLE, CTX, 1).get("luis"), ["lidar"]);
-  const bulk = [c("LuisMend12", luis, ...Array.from({ length: bg.BULK_COMMIT_FILES + 1 }, (_, i) => `src/voice/${i}.py`))];
-  assert.deepStrictEqual(bg.contributions(bulk, pages, PEOPLE, CTX).get("luis"), []); // a repo-wide move says nothing
+  assert.deepStrictEqual(bg.contributions(commits, pages, PEOPLE, CTX, 1).get("sam"), ["lidar"]);
+  const bulk = [c("SamRivera9", sam, ...Array.from({ length: bg.BULK_COMMIT_FILES + 1 }, (_, i) => `src/voice/${i}.py`))];
+  assert.deepStrictEqual(bg.contributions(bulk, pages, PEOPLE, CTX).get("sam"), []); // a repo-wide move says nothing
 });
 
 test("people: match by login, email and name", () => {
   const m = (opts) => bg.matchPerson(PEOPLE, opts);
-  assert.strictEqual(m({ login: "luismend12" }), "luis");
-  assert.strictEqual(m({ name: "LuisM23", email: "128239393+LuisMend12@users.noreply.github.com" }), "luis");
+  assert.strictEqual(m({ login: "samrivera9" }), "sam");
+  assert.strictEqual(m({ name: "SamR23", email: "4242+SamRivera9@users.noreply.github.com" }), "sam");
   assert.strictEqual(m({ name: "Max Hawksby", email: "someone@example.com" }), "max");
   assert.strictEqual(m({ name: "max-gh" }), "max");
   assert.strictEqual(m({ name: "Stranger", email: "x@example.com" }), null);
@@ -163,7 +163,7 @@ test("questions: unanswered when only the asker or bots commented", () => {
 });
 
 test("questions: answered by someone else, or by the label", () => {
-  const q = bg.questionFromIssue(issue(["question", "wiki:slam"]), [{ user: { login: "LuisMend12" }, body: "It turns 360 degrees\nfirst." }], QPAGES);
+  const q = bg.questionFromIssue(issue(["question", "wiki:slam"]), [{ user: { login: "SamRivera9" }, body: "It turns 360 degrees\nfirst." }], QPAGES);
   assert.strictEqual(q.answered, true);
   assert.strictEqual(q.answer_excerpt, "It turns 360 degrees first.");
   assert.strictEqual(bg.questionFromIssue(issue(["question", "wiki:slam", "answered"]), [], QPAGES).answered, true);
@@ -177,8 +177,8 @@ test("questions: not a question, or not on a page", () => {
 
 test("work: questions are not work, wiki issues are", () => {
   assert.strictEqual(bg.workFromIssue(issue(["question", "wiki:slam"]), QPAGES, PEOPLE), null);
-  const w = bg.workFromIssue(issue(["wiki:slam"], "LuisMend12", { assignees: [{ login: "max-gh" }] }), QPAGES, PEOPLE);
-  assert.deepStrictEqual([w.kind, w.person, w.assignees, w.pages], ["issue", "luis", ["max"], ["slam"]]);
+  const w = bg.workFromIssue(issue(["wiki:slam"], "SamRivera9", { assignees: [{ login: "max-gh" }] }), QPAGES, PEOPLE);
+  assert.deepStrictEqual([w.kind, w.person, w.assignees, w.pages], ["issue", "sam", ["max"], ["slam"]]);
 });
 
 test("work: a pull request wants review with reviewers or the review label", () => {
@@ -186,7 +186,7 @@ test("work: a pull request wants review with reviewers or the review label", () 
   const pr = { number: 3, user: { login: "max-gh" }, labels: [], requested_reviewers: [], draft: true, updated_at: "", title: "t", html_url: "u" };
   const w = bg.workFromPr(pr, ["src/slam/a.py"], pages, PEOPLE, CTX);
   assert.deepStrictEqual([w.pages, w.review_requested, w.draft, w.person], [["slam"], false, true, "max"]);
-  pr.requested_reviewers = [{ login: "LuisMend12" }];
+  pr.requested_reviewers = [{ login: "SamRivera9" }];
   assert.strictEqual(bg.workFromPr(pr, [], pages, PEOPLE, CTX).review_requested, true);
   pr.requested_reviewers = [];
   pr.labels = [{ name: "review" }];
@@ -209,8 +209,8 @@ const BPAGES = pagesOf({
   lidar: { file: wiki("lidar"), code: ["src/lidar/**"] },
 });
 const NOW = Date.parse("2026-10-22T12:00:00Z");
-const LUIS = "128239393+LuisMend12@users.noreply.github.com";
-const ref = (name, date, author = "LuisM23", email = LUIS, message = "Lidar: smooth scans") => ({ name, sha: "abc1234def", date, author, email, message });
+const SAM = "4242+SamRivera9@users.noreply.github.com";
+const ref = (name, date, author = "SamR23", email = SAM, message = "Lidar: smooth scans") => ({ name, sha: "abc1234def", date, author, email, message });
 const branches = (refs, info, work = []) => bg.activeBranches(refs, BPAGES, PEOPLE, work, NOW, info, CTX);
 
 test("branches: 14 day cutoff, newest first", () => {
@@ -226,17 +226,17 @@ test("branches: merged branches are left out", () => {
 
 test("branches: files to pages, person and pull request", () => {
   const files = {
-    "luis/lidar": ["src/lidar/scan.py", "docs/wiki/slam.md", "notes.txt"],
+    "sam/lidar": ["src/lidar/scan.py", "docs/wiki/slam.md", "notes.txt"],
     "max/old-layout": ["voice/tts.py", "README.md"], // from before the folder moved: lands on today's page
   };
-  const refs = [ref("luis/lidar", "2026-10-22T09:00:00Z"), ref("max/old-layout", "2026-10-20T09:00:00Z", "Max Hawksby", "max@example.com")];
-  const work = [{ kind: "pr", number: 12, url: "https://github.com/x/y/pull/12", branch: "luis/lidar" }, { kind: "issue", number: 13, url: "u", branch: null }];
+  const refs = [ref("sam/lidar", "2026-10-22T09:00:00Z"), ref("max/old-layout", "2026-10-20T09:00:00Z", "Max Hawksby", "max@example.com")];
+  const work = [{ kind: "pr", number: 12, url: "https://github.com/x/y/pull/12", branch: "sam/lidar" }, { kind: "issue", number: 13, url: "u", branch: null }];
   const got = Object.fromEntries(branches(refs, (name) => [files[name].length, files[name]], work).map((b) => [b.name, b]));
-  const luis = got["luis/lidar"];
+  const sam = got["sam/lidar"];
   const max = got["max/old-layout"];
-  assert.deepStrictEqual([luis.person, luis.ahead, luis.pages], ["luis", 3, ["lidar", "slam"]]);
-  assert.deepStrictEqual(luis.pr, { number: 12, url: "https://github.com/x/y/pull/12" });
-  assert.deepStrictEqual(luis.last_commit, { sha: "abc1234def", date: "2026-10-22T09:00:00Z", message: "Lidar: smooth scans" });
+  assert.deepStrictEqual([sam.person, sam.ahead, sam.pages], ["sam", 3, ["lidar", "slam"]]);
+  assert.deepStrictEqual(sam.pr, { number: 12, url: "https://github.com/x/y/pull/12" });
+  assert.deepStrictEqual(sam.last_commit, { sha: "abc1234def", date: "2026-10-22T09:00:00Z", message: "Lidar: smooth scans" });
   assert.deepStrictEqual([max.person, max.pages, max.pr], ["max", ["home", "voice"], null]);
 });
 
