@@ -69,7 +69,8 @@ test("the skill tells agents to check pages with hypatia, and keeps people's dat
   const skill = templates.read("skills/wiki-keeper/SKILL.md");
   assert.match(skill, /^---\nname: wiki-keeper\n/);
   assert.match(skill, /\{\{HYPATIA\}\} check/);
-  assert.match(skill, /Never put real records/);
+  assert.match(skill, /Pages describe how the code works, never real records, user names, emails or keys\./);
+  assert.match(skill, /private: true/);
   const app = fs.readFileSync(path.join(ROOT, "site", "app.js"), "utf8");
   assert.match(app, /Run `hypatia check` until it passes/);
 });

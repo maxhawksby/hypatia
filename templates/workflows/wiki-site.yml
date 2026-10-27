@@ -1,4 +1,4 @@
-# Hypatia template. `hypatia install` (milestone 3) fills in:
+# Hypatia template. `hypatia init` fills in:
 #   {{DEFAULT_BRANCH}}  the branch the site is built from (main, master, ...)
 #   {{WIKI_DIR}}        the folder of wiki pages (docs/wiki)
 #   {{CONFIG_FILE}}     the optional Hypatia config (docs/hypatia.yml)

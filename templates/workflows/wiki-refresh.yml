@@ -1,4 +1,4 @@
-# Hypatia template. `hypatia install` (milestone 3) fills in:
+# Hypatia template. `hypatia init` fills in:
 #   {{DEFAULT_BRANCH}}  the branch the site is built from (main, master, ...)
 #
 # Keep the wiki's "working on now" current when someone pushes to their own
