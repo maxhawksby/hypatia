@@ -354,3 +354,11 @@ test("links inside code blocks and to normal repo files are not wiki links", () 
     const g = await build(root); // object-detection.md has both
     assert.ok(!g.edges.some((e) => e.target === "missing"));
   }));
+
+test("Markdown in the wiki folder without front matter is a normal doc that pages may link to", () =>
+  withRepo(async (root) => {
+    write(root, "docs/wiki/Home.md", "# An older wiki page, no front matter\n");
+    write(root, "docs/wiki/movement.md", "---\ntitle: Movement\nparent: oak\n---\nSee [the old home](Home.md).\n");
+    const g = await build(root);
+    assert.ok(!g.nodes.some((n) => n.id === "Home" || n.title.startsWith("An older")));
+  }));
