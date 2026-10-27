@@ -15,6 +15,10 @@ Hypatia turns your repo's Markdown into a team wiki.
 One page per part of the code, a map of how the parts connect, and who is working on what.
 Your coding agent keeps the pages true to the code. Node 18+, no dependencies.
 
+## Why I built it
+
+I'm Max, a senior at UConn who has loved building since Legos: scattered pieces, slowly turned into something whole. On my senior design team, AI let us build really fast, but we stopped understanding our own repo. Hypatia is how I put the pieces back together, and it changed how our team worked, so I open-sourced it. **[Read the full story](https://maxhawksby.github.io/hypatia/#about-max)**
+
 ## Quick start
 
 Hypatia is built to be set up by your coding agent (Claude Code, Codex, Cursor). Paste this into it:
