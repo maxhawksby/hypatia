@@ -92,6 +92,13 @@ test("serves index.html with the reload script, the site files and the built dat
   }
 });
 
+test("a live reload saves the reading position under the key the site restores it from", () => {
+  const { RELOAD_CLIENT, SITE } = require("../lib/serve");
+  const app = fs.readFileSync(path.join(SITE, "app.js"), "utf8");
+  assert.match(RELOAD_CLIENT, /sessionStorage\.setItem\("hypatia\.reading"/);
+  assert.match(app, /sessionStorage\.getItem\("hypatia\.reading"\)/);
+});
+
 test("without built data, graph.json is missing so the site falls back to its sample", async () => {
   const s = await start();
   try {

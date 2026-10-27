@@ -56,6 +56,21 @@
     Graph.init();
     window.addEventListener("hashchange", route);
     route();
+    restoreReading();
+  }
+
+  // A live reload (hypatia serve) saves where you were reading just before it
+  // reloads; put the page back there instead of jumping to the top.
+  function restoreReading() {
+    let saved = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem("hypatia.reading"));
+      sessionStorage.removeItem("hypatia.reading");
+    } catch (e) { /* storage off: start at the top */ }
+    if (!saved || saved.hash !== location.hash) return;
+    // "instant": the reader scrolls smoothly, which here would look like a jump
+    $("reader-scroll").scrollTo({ top: saved.top || 0, behavior: "instant" });
+    if (saved.winTop) window.scrollTo({ top: saved.winTop, behavior: "instant" });
   }
 
   function normalize(d) {
@@ -377,6 +392,8 @@
         hits = searchIndex.map((e) => {
           const t = e.title.toLowerCase(), b = e.text.toLowerCase();
           let s = 0;
+          // the whole phrase, words together, beats the same words spread apart
+          if (terms.length > 1 && (t.includes(q) || b.includes(q))) s += t.includes(q) ? 12 : 6;
           for (const term of terms) {
             if (t.includes(term)) s += t.startsWith(term) ? 12 : 8;
             else if (b.includes(term)) s += 2 + Math.min(b.split(term).length - 2, 5) * 0.3;   // more mentions rank higher
@@ -391,10 +408,12 @@
         const e = hit.e;
         const color = e.person ? e.person.color : pagePerson(e.n.id) ? personColor(pagePerson(e.n.id)) : null;
         const kind = e.kind === "page" ? parentTitle(e.n) : e.kind;
-        const snip = e.kind === "page" ? (q && !e.title.toLowerCase().includes(terms[0]) ? snippet(e.text, terms[0]) : null)
-          : e.person ? (e.text ? [e.text] : null) : [e.kind + " on " + e.n.title + (e.text ? " - " : ""), ...snippet(e.text, terms[0] || "")];
+        // show and mark the whole phrase when it is there, else the first word
+        const term = terms.length > 1 && (e.title + " " + e.text).toLowerCase().includes(q) ? q : terms[0];
+        const snip = e.kind === "page" ? (q && !e.title.toLowerCase().includes(term) ? snippet(e.text, term) : null)
+          : e.person ? (e.text ? [e.text] : null) : [e.kind + " on " + e.n.title + (e.text ? " - " : ""), ...snippet(e.text, term || "")];
         const li = h("li", { role: "option", id: "res-" + i, "aria-selected": String(i === 0) },
-          h("span", { class: "r-title" }, color ? dot(color) : null, mark(e.title, terms[0]), kind ? h("span", { class: "r-kind" }, kind) : null),
+          h("span", { class: "r-title" }, color ? dot(color) : null, mark(e.title, term), kind ? h("span", { class: "r-kind" }, kind) : null),
           snip ? h("span", { class: "r-snip" }, snip) : null);
         li.addEventListener("mousedown", (ev) => { ev.preventDefault(); pick(i); });
         li.addEventListener("mousemove", () => { if (sel !== i) { sel = i; paint(); } });
@@ -686,7 +705,7 @@
 
     const nav = $("crumbs");
     nav.textContent = "";
-    nav.append(h("button", { type: "button", onclick: () => go("people") }, "People"),
+    nav.append(h("button", { type: "button", onclick: showPeopleList }, "People"),
       h("span", { class: "sep", "aria-hidden": "true" }, "/"), h("span", { "aria-current": "page" }, p.name));
     ["connections", "backlinks", "saved"].forEach((id) => { $(id).textContent = ""; });
 
@@ -758,6 +777,15 @@
     $("reader-scroll").scrollTop = 0;
     if (!first && window.matchMedia("(max-width: 900px)").matches) window.scrollTo({ top: 0, behavior: "auto" });
     Graph.fit(first);
+  }
+
+  // the People list in the sidebar (opening the sidebar or the narrow-screen menu first)
+  function showPeopleList() {
+    if (window.matchMedia("(max-width: 900px)").matches) openDrawer();
+    else if ($("app").classList.contains("no-side")) setSide(true, true);
+    const first = $("people-list").querySelector("button");
+    $("h-people").scrollIntoView({ block: "nearest" });
+    if (first) first.focus({ preventScroll: true });
   }
 
   function renderCrumbs(n) {
@@ -1181,8 +1209,9 @@
     }
     function computeFit() {
       const b = bounds();
-      const padX = 70, padY = 46;
-      fitK = Math.min(W / (b.x1 - b.x0 + padX * 2), (H - 30) / (b.y1 - b.y0 + padY * 2));
+      // padX is in screen pixels so a page's label at the edge is never cut off
+      const padX = 64, padY = 46;
+      fitK = Math.min((W - padX * 2) / Math.max(b.x1 - b.x0, 1), (H - 30) / (b.y1 - b.y0 + padY * 2));
       fitK = Math.max(0.15, Math.min(fitK, 2));
       return { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 - 12 / fitK, k: fitK };
     }
