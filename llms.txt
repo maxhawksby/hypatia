@@ -1,0 +1,13 @@
+# Hypatia
+
+> Hypatia turns a git repo's Markdown into a team wiki: one page per part of the code, a map of how the parts connect, and a live view of who is working on what, kept current by your coding agent. Node 18+, no dependencies. Install with `npx hypatia init`.
+
+## Install
+
+- [Agent install guide](https://raw.githubusercontent.com/maxhawksby/hypatia/main/INSTALL-AGENT.md): a numbered checklist for coding agents installing Hypatia in a repo and writing its first wiki pages.
+
+## Docs
+
+- [Wiki](https://maxhawksby.github.io/hypatia/): how it works, the team view, the privacy guard, the agent skill, configuration.
+- [README](https://raw.githubusercontent.com/maxhawksby/hypatia/main/README.md)
+- [Working on Hypatia itself](https://raw.githubusercontent.com/maxhawksby/hypatia/main/AGENTS.md)
