@@ -191,7 +191,7 @@ test("hypatia build writes the site and this repo's data, from any folder inside
   }
 });
 
-test("hypatia serve starts on the repo it is run in, and explains a broken wiki", async () => {
+test("hypatia serve starts on the repo it is run in, names it like the site, and explains a broken wiki", async () => {
   const repo = makeRepo();
   const env = { ...process.env, GH_CONFIG_DIR: path.join(repo.root, "no-gh") }; // never use a real GitHub login here
   delete env.GITHUB_TOKEN;
@@ -205,6 +205,8 @@ test("hypatia serve starts on the repo it is run in, and explains a broken wiki"
       const g = JSON.parse((await get(port, "/graph.json")).body);
       assert.strictEqual(g.repo, "acme/notes-app");
       assert.match(out, /5 pages/);
+      assert.notStrictEqual(g.title, path.basename(repo.root));
+      assert.ok(out.includes(`Building the wiki for ${g.title}...`), "named like the site, not like the folder");
     } finally {
       child.kill("SIGTERM");
     }
