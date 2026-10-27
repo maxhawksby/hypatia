@@ -1,6 +1,6 @@
 {
   "name": "hypatia",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A graph-style team wiki for any git repo, with a who's-working-on-what view.",
   "keywords": [
     "wiki",
