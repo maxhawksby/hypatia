@@ -349,6 +349,40 @@ test("stops with a plain message on broken pages", () =>
     await assert.rejects(build(root), /no wiki folder at docs\/wiki/);
   }));
 
+test("broken links: a wiki page's link or any link into the wiki must resolve; README's other links only warn", () =>
+  withRepo(async (root) => {
+    const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
+    // README.md links to a repo file that is not there: a warning, the build goes on
+    write(root, "README.md", readme + "\nSee [the guide](CONTRIBUTING.md) and [old notes](docs/notes/old.md).\n");
+    const warnings = [];
+    const g = await build(root, { warn: (m) => warnings.push(m) });
+    assert.strictEqual(g.nodes.length, 5);
+    assert.deepStrictEqual(warnings, [
+      "README.md links to 'CONTRIBUTING.md', but there is no such file in the repo.",
+      "README.md links to 'docs/notes/old.md', but there is no such file in the repo.",
+    ]);
+    assert.strictEqual(g.missing, undefined, "not a missing page: README's own links are the project's business");
+    // README.md links into the wiki folder: that page must exist
+    write(root, "README.md", readme + "\nSee [Search](docs/wiki/search.md).\n");
+    await assert.rejects(build(root), /README\.md links to 'docs\/wiki\/search\.md', but that page does not exist/);
+    write(root, "README.md", readme);
+    // a wiki page's links are the wiki's own, wherever they point
+    write(root, "docs/wiki/movement.md", "---\ntitle: M\nparent: oak\n---\n[Guide](../../CONTRIBUTING.md)\n");
+    await assert.rejects(build(root), /docs\/wiki\/movement\.md links to '..\/..\/CONTRIBUTING\.md', but that page does not exist/);
+  }));
+
+test("broken links with brokenLinks: \"warn\" (hypatia serve): listed as missing, the build goes on", () =>
+  withRepo(async (root) => {
+    write(root, "docs/wiki/movement.md", "---\ntitle: Movement\nparent: oak\n---\nNext: [Stairs](stairs.md).\n");
+    const g = await build(root, { brokenLinks: "warn" });
+    assert.ok(g.nodes.some((n) => n.id === "movement" && /Stairs/.test(n.markdown)), "the page with the link still updates");
+    assert.deepStrictEqual(g.missing, [
+      { from: "docs/wiki/movement.md", target: "stairs.md", path: "docs/wiki/stairs.md", message: "docs/wiki/movement.md links to 'stairs.md', but that page does not exist." },
+    ]);
+    await assert.rejects(build(root), /links to 'stairs.md', but that page does not exist/, "the default (check, build) still stops");
+    await assert.rejects(build(root, { publish: true }), /links to 'stairs.md'/);
+  }));
+
 test("links inside code blocks and to normal repo files are not wiki links", () =>
   withRepo(async (root) => {
     const g = await build(root); // object-detection.md has both

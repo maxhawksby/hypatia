@@ -92,6 +92,10 @@ test("serves index.html with the reload script, the site files and the built dat
   }
 });
 
+test("the reload script is valid JavaScript", () => {
+  assert.doesNotThrow(() => new Function(require("../lib/serve").RELOAD_CLIENT));
+});
+
 test("a live reload saves the reading position under the key the site restores it from", () => {
   const { RELOAD_CLIENT, SITE } = require("../lib/serve");
   const app = fs.readFileSync(path.join(SITE, "app.js"), "utf8");
@@ -169,6 +173,38 @@ test("live reload: editing a page rebuilds and reloads; a broken page shows a no
     stopWatching();
     l.stop();
     for (const res of s.clients) res.end();
+    s.server.close();
+    repo.cleanup();
+  }
+});
+
+test("live reload: a link to a page not written yet keeps the site updating, shown as missing", async () => {
+  const repo = makeRepo();
+  const logs = [];
+  const builder = createBuilder({ root: repo.root, token: null, repo: null, log: (m) => logs.push(m) });
+  const s = await start({ graph: builder.graph });
+  try {
+    assert.ok((await builder.build("start")).ok);
+    assert.deepStrictEqual(JSON.parse((await get(s.port, "/__hypatia/links")).body), []);
+    const page = path.join(repo.root, "docs/wiki/movement.md");
+    fs.writeFileSync(page, fs.readFileSync(page, "utf8") + "\nNext: [Stairs](stairs.md), still being written.\n");
+    const r = await builder.build("a page changed");
+    assert.ok(r.ok && r.changed, "no error note: the rebuild goes through and reloads");
+    const g = JSON.parse((await get(s.port, "/graph.json")).body);
+    assert.match(g.nodes.find((n) => n.id === "movement").markdown, /still being written/);
+    assert.deepStrictEqual(JSON.parse((await get(s.port, "/__hypatia/links")).body).map((l) => [l.from, l.path]), [["docs/wiki/movement.md", "docs/wiki/stairs.md"]]);
+    assert.strictEqual(logs.filter((m) => /^Broken links:/.test(m)).length, 1);
+    await builder.build("5 minute refresh");
+    assert.strictEqual(logs.filter((m) => /^Broken links:/.test(m)).length, 1, "said once, not on every rebuild");
+    write(repo.root, "docs/wiki/stairs.md", "---\ntitle: Stairs\nparent: movement\n---\nClimbing.\n");
+    await builder.build("a page changed");
+    assert.ok(logs.includes("Broken links: all fixed now."));
+    assert.strictEqual(JSON.parse((await get(s.port, "/graph.json")).body).missing, undefined);
+    fs.rmSync(path.join(repo.root, "docs/wiki/stairs.md"));
+    const check = spawnSync(process.execPath, [CLI, "check"], { cwd: repo.root, encoding: "utf8" });
+    assert.strictEqual(check.status, 1, "check still fails on it");
+    assert.match(check.stderr, /links to 'stairs.md', but that page does not exist/);
+  } finally {
     s.server.close();
     repo.cleanup();
   }

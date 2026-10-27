@@ -51,6 +51,10 @@ private: true               # optional: on the local site only, never on the web
 ---
 ```
 
+### Links
+
+A wiki page's links, and any link into `docs/wiki/`, must point at a file that exists: `hypatia check` and `hypatia build` fail until they do. README.md belongs to the project rather than the wiki, so its links to other repo files that do not exist are only a warning. While you write, `hypatia serve` keeps the site updating through a broken link: the link shows struck out, and a note lists it.
+
 ## The team
 
 Nobody has to write a team file. Everyone who committed is on the team (bots left out), joined across their emails and GitHub login, plus the repo's GitHub collaborators when the token may list them. Each person gets a color from a fixed palette, picked from their id, so it stays the same every build.
