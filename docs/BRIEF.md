@@ -49,4 +49,5 @@ The go2-fusion team wiki turned into something bigger than one project: linked p
 
 - What the starter pages should be for a repo that has no wiki yet (one per top folder, or just a home page).
 - When to bring back the drift check and GitHub login.
-- When and how to open-source (npm name `hypatia` is free today).
+- Decided 2026-10-27: Hypatia goes public on GitHub after milestone 4, right before the uconn-rec trial; npm comes later (name `hypatia` free today).
+- Decided 2026-10-27: uconn-rec's README emails (Max's and a demo student's) go on that repo's `allow:` list rather than being removed.
