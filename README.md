@@ -17,16 +17,19 @@ Your coding agent keeps the pages true to the code. Node 18+, no dependencies.
 
 ## Quick start
 
-```shell
-npx hypatia init     # set it up in this repo
-npx hypatia serve    # open the wiki at http://localhost:4410/
-```
-
-Or ask your coding agent:
+Hypatia is built to be set up by your coding agent (Claude Code, Codex, Cursor). Paste this into it:
 
 ```
 Install Hypatia in this repo by following https://raw.githubusercontent.com/maxhawksby/hypatia/main/INSTALL-AGENT.md
 ```
+
+It installs Hypatia, reads your code, writes the first wiki pages and checks them. Then open the wiki:
+
+```shell
+npx hypatia serve    # http://localhost:4410/
+```
+
+By hand instead: `npx hypatia init`, then ask your agent to write the pages with the wiki-keeper skill.
 
 ## What you get
 

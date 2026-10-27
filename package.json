@@ -1,6 +1,6 @@
 {
   "name": "hypatia",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A living team wiki for any git repo: a map of how the code connects and who is working on what, kept current by your coding agent.",
   "keywords": [
     "wiki",

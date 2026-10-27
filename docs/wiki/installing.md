@@ -8,16 +8,7 @@ code: [lib/init.js, INSTALL-AGENT.md, llms.txt]
 
 You need Node 18 or newer and a git repo. Nothing else: Hypatia has no dependencies.
 
-## From a terminal
-
-```shell
-npx hypatia init     # set it up in this repo
-npx hypatia serve    # open the wiki at http://localhost:4410/
-```
-
-`npx hypatia init --dry-run` prints the plan and changes nothing.
-
-## With a coding agent
+## With a coding agent (recommended)
 
 Paste this into Claude Code, Codex, Cursor or any agent that can run commands:
 
@@ -26,6 +17,17 @@ Install Hypatia in this repo by following https://raw.githubusercontent.com/maxh
 ```
 
 The agent runs init, reads the repo, writes the first pages and runs the check until it passes. The guide it follows is [INSTALL-AGENT.md](../../INSTALL-AGENT.md). Agents that look for `llms.txt` find it there too.
+
+Hypatia needs an agent to be useful: init only sets up the folder, the skill and the site, and the agent writes the pages that describe your code and keeps them current.
+
+## By hand
+
+```shell
+npx hypatia init     # set it up in this repo
+npx hypatia serve    # open the wiki at http://localhost:4410/
+```
+
+`npx hypatia init --dry-run` prints the plan and changes nothing. After init, ask your coding agent to write the pages with the wiki-keeper skill.
 
 ## What init does
 
