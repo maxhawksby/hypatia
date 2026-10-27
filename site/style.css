@@ -260,6 +260,7 @@ mark.hit.cur { background: #ffd666; color: #191919; box-shadow: 0 0 0 2px rgba(2
 .md a { color: var(--accent); text-decoration: none; }
 .md a:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
 .md a.internal { color: var(--accent); }
+.md .missing-link { color: var(--danger); text-decoration: line-through dotted; text-decoration-thickness: 1px; cursor: help; }
 .md code { font: 13px var(--mono); background: var(--hover); padding: 1px 5px; border-radius: 4px; color: #d6d6d6; }
 .md pre { background: var(--bg-side); border-radius: var(--radius); padding: 12px 14px; overflow: auto; }
 .md pre code { background: none; padding: 0; font-size: 13px; line-height: 1.55; }

@@ -17,6 +17,7 @@ const { serve, graphScript, SITE } = require("../lib/serve");
 const { loadConfig } = require("../lib/team");
 const privacy = require("../lib/privacy");
 const { init } = require("../lib/init");
+const { lint } = require("../lib/lint");
 
 const HELP = `Hypatia - a graph-style team wiki for any git repo.
 
@@ -37,8 +38,10 @@ Usage, from inside a repo:
       marked "private: true" are left out. Stops, writing nothing, when the
       privacy guard finds an email, phone number, ID number or key.
   hypatia check
-      Checks the wiki pages (front matter, parents, links) and runs the
-      privacy guard, and says what to fix. Writes nothing; exits with 1 when
+      Checks the wiki pages (front matter, parents, links, code: paths that
+      match no file) and runs the privacy guard, and says what to fix. Also
+      warns about hub pages README.md does not lead to, and counts TODO(
+      markers. Writes nothing; exits with 1 when
       a page has a problem.
 
 The team comes from git history, and from GitHub when it can be read. The
@@ -123,12 +126,20 @@ async function check(root, argv) {
     if (local.length) {
       console.error(`hypatia: private pages (never published) mention:\n${privacy.describeHits(local).map((l) => "  " + l).join("\n")}`);
     }
-    if (hits.length) {
-      console.error(privacyReport(hits, "The wiki check failed: the public site would show"));
+    const found = lint(root, graph);
+    for (const w of found.warnings) console.error(`hypatia: warning: ${w}`);
+    for (const e of found.errors) console.error(`hypatia: ${e}`);
+    const { count, pages } = found.todos;
+    const todoLine = count ? `${count} TODO( ${count === 1 ? "marker" : "markers"} left in ${pages.length} ${pages.length === 1 ? "page" : "pages"}: ${pages.join(", ")}.` : "";
+    if (hits.length) console.error(privacyReport(hits, "The wiki check failed: the public site would show"));
+    if (hits.length || found.errors.length) {
+      if (!hits.length) console.error("hypatia: the wiki check failed.");
+      if (todoLine) console.log(todoLine);
       return 1;
     }
     const kept = excluded.length ? `, ${excluded.length} private ${excluded.length === 1 ? "page" : "pages"} left out` : "";
     console.log(`Wiki check passed: ${graph.nodes.length} pages, ${graph.edges.length} links and parents${kept}, no personal data or keys found.`);
+    if (todoLine) console.log(todoLine);
     return 0;
   } catch (err) {
     if (!(err instanceof WikiError)) throw err;

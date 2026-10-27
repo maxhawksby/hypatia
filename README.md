@@ -26,7 +26,7 @@ A public repo (GitHub says so, or `--public`) also gets, only after a yes at the
 
 A website already in the About box, or Pages already publishing from a branch, is left alone. A private repo gets no website. Init never overwrites a file and is safe to run again; it says what it left alone.
 
-GitHub has to download Hypatia to build the site, so the workflows are only installed with `--runner "<command>"` naming a Hypatia GitHub can reach (for example `npx --yes <package>`). Until Hypatia is published, the default runner is this computer's copy, which works locally only.
+Everything init writes is committed and shared, so it names Hypatia the way a teammate would run it: `npx hypatia serve` and `npx hypatia check` in the pages, the skill and the `wiki` script, and `npx hypatia@<this version>` in the Pages workflow, so the website keeps building with the version it was set up with. `--runner "<command>"` names another command for all of them. Until Hypatia is on npm those commands do not work yet; run it with `node <path to hypatia>/bin/hypatia.js` meanwhile.
 
 ## Privacy guard
 
@@ -50,6 +50,14 @@ code: [web/src/search/**]   # optional: the code this page is about
 private: true               # optional: on the local site only, never on the website
 ---
 ```
+
+### What `hypatia check` checks
+
+Besides the front matter, parents and links, `check` fails when a page's `code:` path or glob matches no file in the repo (tracked or new): the page would point at nothing. It warns, without failing, when a hub page (`parent: home`) is not reachable by links from README.md, and it counts the `TODO(` markers left in the pages.
+
+### Links
+
+A wiki page's links, and any link into `docs/wiki/`, must point at a file that exists: `hypatia check` and `hypatia build` fail until they do. README.md belongs to the project rather than the wiki, so its links to other repo files that do not exist are only a warning. While you write, `hypatia serve` keeps the site updating through a broken link: the link shows struck out, and a note lists it.
 
 ## The team
 

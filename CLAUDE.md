@@ -32,6 +32,8 @@ Milestone 3 (branch milestone-3) added `hypatia init` and the privacy guard.
 - lib/team.js - the team: git authors, GitHub logins and collaborators, palette colors, and
   the optional config (docs/hypatia.yml, or the older docs/team.yml). Shape in README.md.
 - lib/serve.js - local server, file watcher, reload events.
+- lib/lint.js - the extra checks in `hypatia check`: code paths that match nothing, hubs README.md
+  does not lead to, TODO( markers.
 - site/ - the wiki web app (index.html, app.js, style.css), served as is. sample-graph.json
   is a made-up project shown when there is no data.
 - skills/, templates/workflows/ - wiki-keeper skill and Pages workflows as templates with

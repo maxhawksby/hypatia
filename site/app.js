@@ -29,6 +29,7 @@
   // ---------- state ----------
   let D = null;               // graph data
   const byId = {}, byPath = {}, kids = {}, nbrs = {}, people = {};
+  const missing = new Set(); // paths of linked pages that do not exist yet (local site only)
   let hubs = [], current = null, filterPerson = null, viewedPerson = null;
 
   // ---------- load ----------
@@ -99,6 +100,7 @@
       github: typeof d.github === "boolean" ? d.github : !!d.sample || arr(d.work).length > 0 || arr(d.questions).length > 0,
       people: arr(d.people), nodes: arr(d.nodes), edges: arr(d.edges),
       work: arr(d.work), questions: arr(d.questions), recent: arr(d.recent), branches: arr(d.branches),
+      missing: arr(d.missing), // links to pages not written yet; only `hypatia serve` sends any
     };
     const center = d.center || (out.nodes.find((n) => n.depth === 0 || n.parent == null) || {}).id || "home";
     out.center = center;
@@ -118,6 +120,7 @@
 
   function index() {
     D.people.forEach((p) => { people[p.id] = p; });
+    D.missing.forEach((m) => missing.add(m.path));
     D.nodes.forEach((n) => { byId[n.id] = n; if (n.path) byPath[n.path] = n; kids[n.id] = []; nbrs[n.id] = new Set(); });
     D.nodes.forEach((n) => { if (n.parent && kids[n.parent]) kids[n.parent].push(n); });
     D.edges.forEach((e) => {
@@ -926,6 +929,12 @@
       const full = resolvePath(n.path || "", path);
       const page = byPath[full];
       if (page) { a.setAttribute("href", pageHash(page.id, anchor)); a.classList.add("internal"); return; }
+      if (missing.has(full)) { // a page that is not written yet (local site only)
+        const gap = h("span", { class: "missing-link", title: "No page at " + full + " yet" });
+        gap.append(...a.childNodes);
+        a.replaceWith(gap);
+        return;
+      }
       a.href = GH() + "/blob/" + (D.published ? D.branch : D.base) + "/" + full + (anchor ? "#" + anchor : "");
       a.target = "_blank"; a.rel = "noopener";
     });
