@@ -21,9 +21,12 @@ function files(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 }
 
+// Hypatia's own repo address (package.json links) is not a leftover.
+const OWN_REPO = /github\.com\/maxhawksby\/hypatia\b/g;
+
 function assertClean(file) {
   const lines = fs.readFileSync(file, "utf8").split("\n");
-  const bad = lines.map((l, i) => [i + 1, l]).filter(([, l]) => FORBIDDEN.test(l));
+  const bad = lines.map((l, i) => [i + 1, l]).filter(([, l]) => FORBIDDEN.test(l.replace(OWN_REPO, "")));
   assert.deepStrictEqual(bad.map(([n, l]) => `${path.relative(ROOT, file)}:${n}: ${l.trim().slice(0, 100)}`), []);
 }
 
