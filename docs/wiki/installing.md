@@ -38,8 +38,8 @@ Every repo gets:
 A public repo (GitHub says so, or `--public`) also gets these, but only after a yes at the prompt or `--yes`:
 
 - `.github/workflows/wiki-site.yml` and `wiki-refresh.yml`, which build the site and publish it with GitHub Pages;
-- GitHub Pages turned on with Source: GitHub Actions, if it is off;
-- the repo's About website set to the Pages address, if it is empty.
+- GitHub Pages turned on with Source: GitHub Actions, if it is off (`POST repos/<repo>/pages`, through `gh`);
+- the repo's About website set to the Pages address, if it is empty (`PATCH repos/<repo>`, `homepage`).
 
 A website already in the About box, or Pages already publishing from a branch, is left alone. A private repo gets no website; its wiki opens locally. `--private` says "no website" for a public repo too. Init never overwrites a file and is safe to run again: it says what it left alone.
 
