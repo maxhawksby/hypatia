@@ -5,29 +5,26 @@ parent: home
 
 # Start here
 
-This is the first page of the Hypatia wiki. Each page explains one part of the code in plain English: what it does for the project, what it uses, and how it breaks. The map shows how the parts connect and who is working on each one.
+Hypatia turns a repo's Markdown into a team wiki: one page per part of the code, a map of how the parts connect, and a live view of who is working on what. This wiki is Hypatia's own, built by Hypatia. It is the docs and a working example at the same time.
 
-## Open the wiki
+## Use it
 
-From the repo, run `npm run wiki`. It opens the wiki in your browser and reloads it whenever a page changes.
+- [Installing](installing.md) - one command in a terminal, or one line to your coding agent.
+- [Writing pages](writing-pages.md) - what a page looks like and what the check asks of it.
+- [Configuration](configuration.md) - the optional `docs/hypatia.yml`: title, names, colors.
 
-## Add a page
+## Understand it
 
-1. Make `docs/wiki/<name>.md` (lowercase words joined by '-') that starts like this:
+- [How it works](how-it-works.md) - the four commands, the graph, and live reload.
+- [The team view](team-view.md) - who is on the team and what they are working on.
+- [The privacy guard](privacy-guard.md) - what keeps emails and keys off the website.
+- [The agent skill](agent-skill.md) - how a coding agent keeps the pages true to the code.
 
-   ```
-   ---
-   title: Search
-   parent: start-here        # the hub it belongs under; a new hub uses "home"
-   code: [src/search/**]     # optional: the code this page is about
-   ---
-   ```
+## The story
 
-2. Link to it from its hub page, and link pages that work together.
-3. Run `node bin/hypatia.js check` until it says the check passed.
+- [How it came together](how-it-came-together.md) - from a robotics team's wiki to an npm package.
+- [Roadmap](roadmap.md) - what comes next.
 
-Or ask Claude to write the pages: the wiki-keeper skill in this repo tells it how.
+## Open this wiki
 
-## Privacy
-
-Pages describe how the code works, never real records, user names, emails or keys. Use made-up values such as `user@example.com`. The check stops the website build if a page looks like it holds personal data or a key. A page with `private: true` in its front matter shows only on your own computer, never on the website.
+On the web: <https://maxhawksby.github.io/hypatia/>. On your own computer, from a clone of the repo: `npm run wiki` (it runs `node bin/hypatia.js serve`).
