@@ -253,7 +253,7 @@ test("local serve: still runs with a seeded page, and hands the warning to the b
       assert.strictEqual(JSON.parse(res.body).length, 3);
       assert.doesNotMatch(res.body, /jane\.doe|Zq7Zq7/);
       const reload = await get(port, "/__hypatia/reload.js");
-      assert.match(reload.body, /Privacy guard: the website build would refuse to publish this wiki\./);
+      assert.match(reload.body, /fetch\("\/__hypatia\/privacy"\)[\s\S]*the website build/, "the page shows the findings");
     } finally {
       s.server.close();
     }
