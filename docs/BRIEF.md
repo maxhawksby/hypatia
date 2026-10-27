@@ -13,6 +13,7 @@ The go2-fusion team wiki turned into something bigger than one project: linked p
 - **Team view**: who is working on which page, built from branches, issues and pull requests. The team list comes from GitHub collaborators, not a hand-written file (a file can still override names and colors).
 - **Agent skill**: the wiki-keeper skill, made generic, so Claude keeps pages current and claims tasks on the graph.
 - **Opens locally** with one command, live-reloading when a page changes, in public and private repos alike.
+- **Privacy guard**: every site build scans the pages and the site data for emails, phone numbers, student-ID patterns and API keys, and stops before publishing if it finds any. A page marked `private: true` shows locally but never on the public website. The agent skill has a firm rule: pages describe how the code works, never real records, user names, emails or keys. The team view only ever shows the repo's GitHub collaborators, never the app's users.
 - **Tasks stay in GitHub Issues.**
 - **Node only** (no Python needed).
 
@@ -30,9 +31,9 @@ The go2-fusion team wiki turned into something bigger than one project: linked p
 
 1. **Extract and polish**: the go2-fusion wiki runs from Hypatia, looking the same as today, with every feature tested and its bugs fixed.
 2. **Make it generic**: repo name, team and colors come from git and GitHub, nothing Oak-specific left.
-3. **Install command**: one command sets Hypatia up in a fresh repo.
+3. **Install command and privacy guard**: one command sets Hypatia up in a fresh repo, and the privacy scan blocks a test page seeded with a fake email and key.
 4. **Trials**: installed in agent-hq and editlab; Max reviews each.
-5. **Private trial**: installed in uconn-rec after Max approves the plan for it (student privacy).
+5. **uconn-rec trial**: installed after Max approves the plan for it. uconn-rec is public and has student accounts, so its repo is audited for personal data and keys first.
 
 ## Acceptance criteria
 
@@ -41,6 +42,7 @@ The go2-fusion team wiki turned into something bigger than one project: linked p
 - Max opens each wiki locally and sees the map, the pages and their links, and the team view.
 - Side by side with the go2-fusion wiki, Hypatia looks and behaves nearly the same.
 - In each repo, the team view shows the right people and what they are working on.
+- Max adds a fake email to a page, and the public site build refuses to publish it; a page marked private never appears on the website.
 - Max asks Claude to update a page in a trial repo, and the change shows up on the open site without a refresh.
 
 ## Open questions
