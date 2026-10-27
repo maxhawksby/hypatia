@@ -36,7 +36,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "wiki": "node bin/hypatia.js serve"
   },
   "publishConfig": {
     "access": "public"
