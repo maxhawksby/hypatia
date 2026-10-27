@@ -1,0 +1,53 @@
+# Publishes Hypatia to npm on its own whenever main carries a version that npm
+# does not have yet. To release: bump "version" in package.json and push to main.
+# Everything else pushed to main (docs, wiki pages, README) publishes nothing.
+#
+# No npm token is stored anywhere: npm trusts this workflow directly
+# ("trusted publishing"), set up once on npmjs.com > hypatia > Settings >
+# Trusted Publisher > GitHub Actions: maxhawksby / hypatia / publish.yml.
+name: Publish to npm
+
+on:
+  push:
+    branches: [main]
+    paths: [package.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write  # lets npm confirm this run really is this workflow
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Is this version new to npm?
+        id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "hypatia@$version" version >/dev/null 2>&1; then
+            echo "hypatia@$version is already on npm; nothing to publish."
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test
+        if: steps.version.outputs.new == 'true'
+        run: npm test
+
+      - name: Publish
+        if: steps.version.outputs.new == 'true'
+        run: npm publish

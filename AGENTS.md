@@ -24,3 +24,4 @@ For coding agents working on Hypatia itself. To install Hypatia in another repo,
 - When you change code a wiki page explains, update that page in the same change, following `.claude/skills/wiki-keeper/SKILL.md`.
 - Commit messages are one plain sentence that says what changed.
 - Plain dashes in text, never em dashes.
+- Releasing: bump `version` in package.json and push to main; `.github/workflows/publish.yml` tests and publishes it to npm. Bump when anything people run changes (`bin`, `lib`, `site`, `skills`, `templates`); docs and wiki changes need no bump.
