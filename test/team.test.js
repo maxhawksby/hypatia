@@ -34,7 +34,7 @@ test("team from git: one person per author, identities joined, bots left out", (
   const got = people.map((p) => [p.id, p.name, p.github, p.commits]);
   assert.deepStrictEqual(got, [
     ["max-hawksby", "Max Hawksby", "max-gh", 3], // two names, two emails, one person
-    ["luism23", "LuisM23", "LuisMend12", 2], // the noreply email gives the login
+    ["luismend12", "LuisMend12", "LuisMend12", 2], // the noreply email gives the login, used as the name
     ["jevgome", "jevgome", "", 1],
   ]);
 });
@@ -161,7 +161,7 @@ test("config: only_listed keeps just the listed people; the older docs/team.yml 
   assert.deepStrictEqual(listed.map((p) => p.id), ["max"]);
   assert.strictEqual(team.parseConfig("people:\n  - id: a\n", { legacy: true }).onlyListed, true);
   assert.strictEqual(team.parseConfig("only_listed: false\npeople:\n  - id: a\n", { legacy: true }).onlyListed, false);
-  assert.deepStrictEqual(team.resolveTeam(NO_CONFIG, auto).map((p) => p.id), ["max-hawksby", "luism23", "jevgome"]);
+  assert.deepStrictEqual(team.resolveTeam(NO_CONFIG, auto).map((p) => p.id), ["max-hawksby", "luismend12", "jevgome"]);
 });
 
 test("config: docs/hypatia.yml wins over docs/team.yml, and a bad color is replaced", () =>
