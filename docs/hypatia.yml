@@ -1,0 +1,7 @@
+title: Hypatia
+# The made-up support address in the example on the Configuration page.
+allow: [help@larkspur.dev]
+people:
+  - github: maxhawksby
+    name: Max Hawksby
+    focus: Getting Hypatia ready for launch

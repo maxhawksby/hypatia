@@ -19,6 +19,9 @@ Milestone 3 added `hypatia init` and the privacy guard.
   the full local history is in the `history-backup` branch (never push it: it holds the
   original go2-fusion copy with teammates' details).
 - Brief: docs/BRIEF.md (the spec; milestones 1-5).
+- On npm as `hypatia`. User docs are Hypatia's own wiki in docs/wiki/ (published at
+  https://maxhawksby.github.io/hypatia/); README.md stays one screen. INSTALL-AGENT.md is the
+  agent install guide (its raw URL is in the README); AGENTS.md is for agents working on Hypatia.
 - Stack: Node 18+, built-ins only, no dependencies. `npm test` runs everything.
 
 ## Layout
@@ -32,7 +35,7 @@ Milestone 3 added `hypatia init` and the privacy guard.
   in lib/build-graph.js (`publish: true`).
 - lib/build-graph.js - builds graph.json (pages, links, history, branches, GitHub work).
 - lib/team.js - the team: git authors, GitHub logins and collaborators, palette colors, and
-  the optional config (docs/hypatia.yml, or the older docs/team.yml). Shape in README.md.
+  the optional config (docs/hypatia.yml, or the older docs/team.yml). Shape in docs/wiki/configuration.md.
 - lib/serve.js - local server, file watcher, reload events.
 - lib/lint.js - the extra checks in `hypatia check`: code paths that match nothing, hubs README.md
   does not lead to, TODO( markers.

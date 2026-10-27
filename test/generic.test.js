@@ -21,8 +21,8 @@ function files(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 }
 
-// Hypatia's own repo address (package.json links) is not a leftover.
-const OWN_REPO = /github\.com\/maxhawksby\/hypatia\b/g;
+// Hypatia's own repo and website addresses (package.json links) are not leftovers.
+const OWN_REPO = /(github\.com\/maxhawksby|maxhawksby\.github\.io)\/hypatia\b/g;
 
 function assertClean(file) {
   const lines = fs.readFileSync(file, "utf8").split("\n");

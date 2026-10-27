@@ -1,16 +1,29 @@
 {
   "name": "hypatia",
   "version": "0.2.0",
-  "description": "A graph-style team wiki for any git repo, with a who's-working-on-what view.",
+  "description": "A living team wiki for any git repo: a map of how the code connects and who is working on what, kept current by your coding agent.",
   "keywords": [
     "wiki",
+    "team-wiki",
     "docs",
+    "documentation",
     "knowledge-graph",
+    "knowledge-base",
     "obsidian",
-    "team",
-    "github",
+    "graph",
     "markdown",
-    "claude-code"
+    "github-pages",
+    "git",
+    "team",
+    "onboarding",
+    "developer-tools",
+    "cli",
+    "ai-agents",
+    "coding-agent",
+    "claude-code",
+    "codex",
+    "cursor",
+    "llms-txt"
   ],
   "author": "Max Hawksby",
   "license": "MIT",
@@ -18,7 +31,7 @@
     "type": "git",
     "url": "git+https://github.com/maxhawksby/hypatia.git"
   },
-  "homepage": "https://github.com/maxhawksby/hypatia#readme",
+  "homepage": "https://maxhawksby.github.io/hypatia/",
   "bugs": {
     "url": "https://github.com/maxhawksby/hypatia/issues"
   },
@@ -36,7 +49,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "wiki": "node bin/hypatia.js serve"
   },
   "publishConfig": {
     "access": "public"
