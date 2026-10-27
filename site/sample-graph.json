@@ -1,0 +1,843 @@
+{
+ "version": 3,
+ "sample": true,
+ "note": "FAKE sample data for the front end: the project, people, work and changes are all made up. Replaced by graph.json from hypatia serve or hypatia build.",
+ "title": "Larkspur",
+ "center": "larkspur",
+ "branch": "main",
+ "base": "main",
+ "published": true,
+ "generated_at": "2026-10-22T09:00:00+00:00",
+ "repo": "example/larkspur",
+ "people": [
+  {
+   "id": "ada",
+   "name": "Ada Park",
+   "github": "ada-example",
+   "color": "#4dabf7",
+   "focus": "Search that understands ingredients",
+   "past": [
+    "search"
+   ],
+   "contributed": [
+    "search",
+    "search-index",
+    "recipes-api"
+   ],
+   "worked_on": [
+    "search",
+    "search-index",
+    "recipes-api"
+   ]
+  },
+  {
+   "id": "bruno",
+   "name": "Bruno Silva",
+   "github": "bruno-example",
+   "color": "#f783ac",
+   "focus": "Photo uploads in the recipe editor",
+   "past": [],
+   "contributed": [
+    "recipe-editor",
+    "file-storage",
+    "background-jobs"
+   ],
+   "worked_on": [
+    "recipe-editor",
+    "file-storage",
+    "background-jobs"
+   ]
+  },
+  {
+   "id": "chen",
+   "name": "Chen Wei",
+   "github": "chen-example",
+   "color": "#b197fc",
+   "focus": "Faster deploys",
+   "past": [
+    "monitoring"
+   ],
+   "contributed": [
+    "deploys",
+    "monitoring"
+   ],
+   "worked_on": [
+    "monitoring",
+    "deploys"
+   ]
+  },
+  {
+   "id": "dana",
+   "name": "Dana Okafor",
+   "github": "dana-example",
+   "color": "#ff8787",
+   "focus": "Sign-in links that never expire early",
+   "past": [],
+   "contributed": [
+    "sign-in",
+    "auth-api"
+   ],
+   "worked_on": [
+    "sign-in",
+    "auth-api"
+   ]
+  },
+  {
+   "id": "eli",
+   "name": "Eli Brandt",
+   "github": "eli-example",
+   "color": "#a9e34b",
+   "focus": "Database clean-up",
+   "past": [],
+   "contributed": [
+    "database",
+    "recipes-api"
+   ],
+   "worked_on": [
+    "database",
+    "recipes-api"
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "id": "larkspur",
+   "title": "Larkspur",
+   "parent": null,
+   "hub": null,
+   "depth": 0,
+   "code": [],
+   "path": "README.md",
+   "markdown": "# Larkspur\n\nLarkspur is a **sample project**: a small recipe-sharing app, made up to show what a Hypatia wiki looks like. The people, issues and pull requests here are invented too.\n\nStart at a hub:\n\n- [Web app](docs/wiki/web-app.md) - the pages people see in the browser.\n- [API](docs/wiki/api.md) - the server the web app talks to.\n- [Data](docs/wiki/data.md) - where recipes and accounts are stored.\n- [Operations](docs/wiki/operations.md) - how the app is deployed and watched.\n\nRun `hypatia serve` inside your own repo to see its real pages, people and work instead.\n",
+   "summary": "Larkspur is a sample project: a small recipe-sharing app, made up to show what a Hypatia wiki looks like.",
+   "x": 0,
+   "y": 0,
+   "backlinks": [],
+   "last_change": null
+  },
+  {
+   "id": "api",
+   "title": "API",
+   "parent": "larkspur",
+   "hub": "api",
+   "depth": 1,
+   "code": [
+    "server/**"
+   ],
+   "path": "docs/wiki/api.md",
+   "markdown": "# API\n\nThe API is one small server. It answers the [web app](web-app.md), checks who is asking with [auth](auth-api.md) and keeps data in the [database](database.md).\n",
+   "summary": "The API is one small server.",
+   "x": 0,
+   "y": -320,
+   "backlinks": [
+    "auth-api",
+    "background-jobs",
+    "deploys",
+    "larkspur",
+    "recipes-api",
+    "web-app"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "auth-api",
+   "title": "Auth",
+   "parent": "api",
+   "hub": "api",
+   "depth": 2,
+   "code": [
+    "server/auth/**"
+   ],
+   "path": "docs/wiki/auth-api.md",
+   "markdown": "# Auth\n\nPart of: [API](api.md)\n\nAuth sends sign-in links and checks sessions. Sessions live in the [database](database.md).\n",
+   "summary": "Auth sends sign-in links and checks sessions.",
+   "x": -91.8,
+   "y": -344.6,
+   "backlinks": [
+    "api",
+    "sign-in"
+   ],
+   "last_change": {
+    "sha": "e5b12f0",
+    "date": "2026-10-20T09:12:00Z",
+    "author": "Dana Okafor",
+    "person": "dana",
+    "message": "(sample) Auth: log why a link was refused"
+   }
+  },
+  {
+   "id": "background-jobs",
+   "title": "Background jobs",
+   "parent": "api",
+   "hub": "api",
+   "depth": 2,
+   "code": [
+    "server/jobs/**"
+   ],
+   "path": "docs/wiki/background-jobs.md",
+   "markdown": "# Background jobs\n\nPart of: [API](api.md)\n\nBackground jobs do slow work after a request is answered: resizing photos and updating the [search index](search-index.md).\n",
+   "summary": "Background jobs do slow work after a request is answered: resizing photos and updating the search index.",
+   "x": 0,
+   "y": -415,
+   "backlinks": [
+    "file-storage",
+    "recipes-api"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "data",
+   "title": "Data",
+   "parent": "larkspur",
+   "hub": "data",
+   "depth": 1,
+   "code": [
+    "db/**"
+   ],
+   "path": "docs/wiki/data.md",
+   "markdown": "# Data\n\nData is where everything is kept: the [database](database.md), the [search index](search-index.md) and [file storage](file-storage.md).\n",
+   "summary": "Data is where everything is kept: the database, the search index and file storage.",
+   "x": 320,
+   "y": 0,
+   "backlinks": [
+    "database",
+    "file-storage",
+    "larkspur",
+    "search-index"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "database",
+   "title": "Database",
+   "parent": "data",
+   "hub": "data",
+   "depth": 2,
+   "code": [
+    "db/migrations/**"
+   ],
+   "path": "docs/wiki/database.md",
+   "markdown": "# Database\n\nPart of: [Data](data.md)\n\nThe database holds accounts, recipes and follows. Changes to its tables are written as migrations.\n",
+   "summary": "The database holds accounts, recipes and follows.",
+   "x": 344.6,
+   "y": -91.8,
+   "backlinks": [
+    "api",
+    "auth-api",
+    "data",
+    "search-index"
+   ],
+   "last_change": {
+    "sha": "b27de91",
+    "date": "2026-10-21T17:40:00Z",
+    "author": "Eli Brandt",
+    "person": "eli",
+    "message": "(sample) Database: drop the unused tags table"
+   }
+  },
+  {
+   "id": "deploys",
+   "title": "Deploys",
+   "parent": "operations",
+   "hub": "operations",
+   "depth": 2,
+   "code": [
+    "ops/deploy/**"
+   ],
+   "path": "docs/wiki/deploys.md",
+   "markdown": "# Deploys\n\nPart of: [Operations](operations.md)\n\nEvery merge to main deploys the [API](api.md) and the [web app](web-app.md) after the tests pass.\n",
+   "summary": "Every merge to main deploys the API and the web app after the tests pass.",
+   "x": 91.8,
+   "y": 344.6,
+   "backlinks": [
+    "operations"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "feed",
+   "title": "Feed",
+   "parent": "web-app",
+   "hub": "web-app",
+   "depth": 2,
+   "code": [
+    "web/src/feed/**"
+   ],
+   "path": "docs/wiki/feed.md",
+   "markdown": "# Feed\n\nPart of: [Web app](web-app.md)\n\nThe feed lists new recipes from people a cook follows, newest first, from the [recipes API](recipes-api.md).\n",
+   "summary": "The feed lists new recipes from people a cook follows, newest first, from the recipes API.",
+   "x": -344.6,
+   "y": 91.8,
+   "backlinks": [
+    "web-app"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "file-storage",
+   "title": "File storage",
+   "parent": "data",
+   "hub": "data",
+   "depth": 2,
+   "code": [
+    "server/files/**"
+   ],
+   "path": "docs/wiki/file-storage.md",
+   "markdown": "# File storage\n\nPart of: [Data](data.md)\n\nFile storage keeps recipe photos, resized by [background jobs](background-jobs.md).\n",
+   "summary": "File storage keeps recipe photos, resized by background jobs.",
+   "x": 415,
+   "y": 0,
+   "backlinks": [
+    "data",
+    "recipe-editor"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "monitoring",
+   "title": "Monitoring",
+   "parent": "operations",
+   "hub": "operations",
+   "depth": 2,
+   "code": [
+    "ops/monitoring/**"
+   ],
+   "path": "docs/wiki/monitoring.md",
+   "markdown": "# Monitoring\n\nPart of: [Operations](operations.md)\n\nMonitoring watches error rates and slow requests, and alerts whoever is on call.\n",
+   "summary": "Monitoring watches error rates and slow requests, and alerts whoever is on call.",
+   "x": -91.8,
+   "y": 344.6,
+   "backlinks": [
+    "operations"
+   ],
+   "last_change": {
+    "sha": "d4410be",
+    "date": "2026-10-20T16:30:00Z",
+    "author": "Chen Wei",
+    "person": "chen",
+    "message": "(sample) Monitoring: alert on slow searches"
+   }
+  },
+  {
+   "id": "operations",
+   "title": "Operations",
+   "parent": "larkspur",
+   "hub": "operations",
+   "depth": 1,
+   "code": [
+    "ops/**"
+   ],
+   "path": "docs/wiki/operations.md",
+   "markdown": "# Operations\n\nOperations covers [deploys](deploys.md) and [monitoring](monitoring.md).\n",
+   "summary": "Operations covers deploys and monitoring.",
+   "x": 0,
+   "y": 320,
+   "backlinks": [
+    "deploys",
+    "larkspur",
+    "monitoring"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "recipe-editor",
+   "title": "Recipe editor",
+   "parent": "web-app",
+   "hub": "web-app",
+   "depth": 2,
+   "code": [
+    "web/src/editor/**"
+   ],
+   "path": "docs/wiki/recipe-editor.md",
+   "markdown": "# Recipe editor\n\nPart of: [Web app](web-app.md)\n\nThe recipe editor is where a cook writes steps and adds photos. Photos go to [file storage](file-storage.md); the text is saved through the [recipes API](recipes-api.md).\n",
+   "summary": "The recipe editor is where a cook writes steps and adds photos.",
+   "x": -406.1,
+   "y": 40.1,
+   "backlinks": [
+    "web-app"
+   ],
+   "last_change": {
+    "sha": "c90aa13",
+    "date": "2026-10-21T11:05:00Z",
+    "author": "Bruno Silva",
+    "person": "bruno",
+    "message": "(sample) Recipe editor: show upload progress"
+   }
+  },
+  {
+   "id": "recipes-api",
+   "title": "Recipes API",
+   "parent": "api",
+   "hub": "api",
+   "depth": 2,
+   "code": [
+    "server/recipes/**"
+   ],
+   "path": "docs/wiki/recipes-api.md",
+   "markdown": "# Recipes API\n\nPart of: [API](api.md)\n\nThe recipes API saves, lists and searches recipes. New recipes are added to the [search index](search-index.md) by a [background job](background-jobs.md).\n",
+   "summary": "The recipes API saves, lists and searches recipes.",
+   "x": 91.8,
+   "y": -344.6,
+   "backlinks": [
+    "feed",
+    "recipe-editor",
+    "search"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "search-index",
+   "title": "Search index",
+   "parent": "data",
+   "hub": "data",
+   "depth": 2,
+   "code": [
+    "server/search/**"
+   ],
+   "path": "docs/wiki/search-index.md",
+   "markdown": "# Search index\n\nPart of: [Data](data.md)\n\nThe search index makes [search](search.md) fast. It is rebuilt from the [database](database.md) each night.\n",
+   "summary": "The search index makes search fast.",
+   "x": 344.6,
+   "y": 91.8,
+   "backlinks": [
+    "background-jobs",
+    "data",
+    "recipes-api",
+    "search"
+   ],
+   "last_change": {
+    "sha": "f61c7aa",
+    "date": "2026-10-19T14:00:00Z",
+    "author": "Ada Park",
+    "person": "ada",
+    "message": "(sample) Search index: rebuild in batches"
+   }
+  },
+  {
+   "id": "search",
+   "title": "Search",
+   "parent": "web-app",
+   "hub": "web-app",
+   "depth": 2,
+   "code": [
+    "web/src/search/**"
+   ],
+   "path": "docs/wiki/search.md",
+   "markdown": "# Search\n\nPart of: [Web app](web-app.md)\n\nSearch finds recipes by name or ingredient. It asks the [recipes API](recipes-api.md), which reads the [search index](search-index.md).\n",
+   "summary": "Search finds recipes by name or ingredient.",
+   "x": -406.1,
+   "y": -40.1,
+   "backlinks": [
+    "search-index",
+    "web-app"
+   ],
+   "last_change": {
+    "sha": "a1f3c20",
+    "date": "2026-10-21T22:14:00Z",
+    "author": "Ada Park",
+    "person": "ada",
+    "message": "(sample) Search: rank exact names first"
+   }
+  },
+  {
+   "id": "sign-in",
+   "title": "Sign-in",
+   "parent": "web-app",
+   "hub": "web-app",
+   "depth": 2,
+   "code": [
+    "web/src/sign-in/**"
+   ],
+   "path": "docs/wiki/sign-in.md",
+   "markdown": "# Sign-in\n\nPart of: [Web app](web-app.md)\n\nSign-in lets a cook in with an email link, checked by [auth](auth-api.md). How it breaks: an expired link shows a friendly \"try again\" page.\n",
+   "summary": "Sign-in lets a cook in with an email link, checked by auth.",
+   "x": -344.6,
+   "y": -91.8,
+   "backlinks": [
+    "web-app"
+   ],
+   "last_change": null
+  },
+  {
+   "id": "web-app",
+   "title": "Web app",
+   "parent": "larkspur",
+   "hub": "web-app",
+   "depth": 1,
+   "code": [
+    "web/**"
+   ],
+   "path": "docs/wiki/web-app.md",
+   "markdown": "# Web app\n\nThe web app is what cooks use: they [sign in](sign-in.md), browse the [feed](feed.md), [search](search.md) and write recipes in the [recipe editor](recipe-editor.md). It gets everything from the [API](api.md).\n",
+   "summary": "The web app is what cooks use: they sign in, browse the feed, search and write recipes in the recipe editor.",
+   "x": -320,
+   "y": 0,
+   "backlinks": [
+    "api",
+    "deploys",
+    "feed",
+    "larkspur",
+    "recipe-editor",
+    "search",
+    "sign-in"
+   ],
+   "last_change": null
+  }
+ ],
+ "edges": [
+  {
+   "source": "larkspur",
+   "target": "api",
+   "kind": "parent"
+  },
+  {
+   "source": "api",
+   "target": "auth-api",
+   "kind": "parent"
+  },
+  {
+   "source": "api",
+   "target": "background-jobs",
+   "kind": "parent"
+  },
+  {
+   "source": "larkspur",
+   "target": "data",
+   "kind": "parent"
+  },
+  {
+   "source": "data",
+   "target": "database",
+   "kind": "parent"
+  },
+  {
+   "source": "operations",
+   "target": "deploys",
+   "kind": "parent"
+  },
+  {
+   "source": "web-app",
+   "target": "feed",
+   "kind": "parent"
+  },
+  {
+   "source": "data",
+   "target": "file-storage",
+   "kind": "parent"
+  },
+  {
+   "source": "operations",
+   "target": "monitoring",
+   "kind": "parent"
+  },
+  {
+   "source": "larkspur",
+   "target": "operations",
+   "kind": "parent"
+  },
+  {
+   "source": "web-app",
+   "target": "recipe-editor",
+   "kind": "parent"
+  },
+  {
+   "source": "api",
+   "target": "recipes-api",
+   "kind": "parent"
+  },
+  {
+   "source": "data",
+   "target": "search-index",
+   "kind": "parent"
+  },
+  {
+   "source": "web-app",
+   "target": "search",
+   "kind": "parent"
+  },
+  {
+   "source": "web-app",
+   "target": "sign-in",
+   "kind": "parent"
+  },
+  {
+   "source": "larkspur",
+   "target": "web-app",
+   "kind": "parent"
+  },
+  {
+   "source": "api",
+   "target": "web-app",
+   "kind": "link"
+  },
+  {
+   "source": "api",
+   "target": "database",
+   "kind": "link"
+  },
+  {
+   "source": "auth-api",
+   "target": "database",
+   "kind": "link"
+  },
+  {
+   "source": "background-jobs",
+   "target": "search-index",
+   "kind": "link"
+  },
+  {
+   "source": "deploys",
+   "target": "api",
+   "kind": "link"
+  },
+  {
+   "source": "deploys",
+   "target": "web-app",
+   "kind": "link"
+  },
+  {
+   "source": "feed",
+   "target": "recipes-api",
+   "kind": "link"
+  },
+  {
+   "source": "file-storage",
+   "target": "background-jobs",
+   "kind": "link"
+  },
+  {
+   "source": "recipe-editor",
+   "target": "file-storage",
+   "kind": "link"
+  },
+  {
+   "source": "recipe-editor",
+   "target": "recipes-api",
+   "kind": "link"
+  },
+  {
+   "source": "recipes-api",
+   "target": "search-index",
+   "kind": "link"
+  },
+  {
+   "source": "recipes-api",
+   "target": "background-jobs",
+   "kind": "link"
+  },
+  {
+   "source": "search-index",
+   "target": "search",
+   "kind": "link"
+  },
+  {
+   "source": "search-index",
+   "target": "database",
+   "kind": "link"
+  },
+  {
+   "source": "search",
+   "target": "recipes-api",
+   "kind": "link"
+  },
+  {
+   "source": "sign-in",
+   "target": "auth-api",
+   "kind": "link"
+  }
+ ],
+ "work": [
+  {
+   "kind": "pr",
+   "number": 101,
+   "title": "(sample) Search: match ingredients by their plural",
+   "url": "https://github.com/example/larkspur/pull/101",
+   "author": "ada-example",
+   "person": "ada",
+   "assignees": [
+    "ada"
+   ],
+   "pages": [
+    "search",
+    "search-index"
+   ],
+   "review_requested": true,
+   "draft": false,
+   "branch": "ada/plural-search",
+   "updated_at": "2026-10-22T08:30:00Z"
+  },
+  {
+   "kind": "issue",
+   "number": 102,
+   "title": "(sample) Big photos time out on upload",
+   "url": "https://github.com/example/larkspur/issues/102",
+   "author": "bruno-example",
+   "person": "bruno",
+   "assignees": [
+    "bruno"
+   ],
+   "pages": [
+    "recipe-editor",
+    "file-storage"
+   ],
+   "review_requested": false,
+   "draft": false,
+   "updated_at": "2026-10-21T19:00:00Z"
+  },
+  {
+   "kind": "pr",
+   "number": 103,
+   "title": "(sample) Deploys: cache the build between steps",
+   "url": "https://github.com/example/larkspur/pull/103",
+   "author": "chen-example",
+   "person": "chen",
+   "assignees": [],
+   "pages": [
+    "deploys"
+   ],
+   "review_requested": false,
+   "draft": true,
+   "branch": "chen/cache-build",
+   "updated_at": "2026-10-21T15:00:00Z"
+  },
+  {
+   "kind": "issue",
+   "number": 104,
+   "title": "(sample) Sign-in link expires after one minute",
+   "url": "https://github.com/example/larkspur/issues/104",
+   "author": "dana-example",
+   "person": "dana",
+   "assignees": [
+    "dana"
+   ],
+   "pages": [
+    "sign-in",
+    "auth-api"
+   ],
+   "review_requested": false,
+   "draft": false,
+   "updated_at": "2026-10-20T10:00:00Z"
+  }
+ ],
+ "questions": [
+  {
+   "number": 201,
+   "title": "(sample) Why is the search index rebuilt every night?",
+   "url": "https://github.com/example/larkspur/issues/201",
+   "page": "search-index",
+   "asker": "eli-example",
+   "answered": true,
+   "answer_excerpt": "(sample) New recipes are added right away; the nightly rebuild catches edits and deletes.",
+   "updated_at": "2026-10-21T12:00:00Z"
+  },
+  {
+   "number": 202,
+   "title": "(sample) Who gets the monitoring alerts?",
+   "url": "https://github.com/example/larkspur/issues/202",
+   "page": "monitoring",
+   "asker": "bruno-example",
+   "answered": false,
+   "answer_excerpt": "",
+   "updated_at": "2026-10-20T09:00:00Z"
+  }
+ ],
+ "recent": [
+  {
+   "sha": "a1f3c20",
+   "date": "2026-10-21T22:14:00Z",
+   "author": "Ada Park",
+   "person": "ada",
+   "message": "(sample) Search: rank exact names first",
+   "pages": [
+    "search"
+   ]
+  },
+  {
+   "sha": "b27de91",
+   "date": "2026-10-21T17:40:00Z",
+   "author": "Eli Brandt",
+   "person": "eli",
+   "message": "(sample) Database: drop the unused tags table",
+   "pages": [
+    "database"
+   ]
+  },
+  {
+   "sha": "c90aa13",
+   "date": "2026-10-21T11:05:00Z",
+   "author": "Bruno Silva",
+   "person": "bruno",
+   "message": "(sample) Recipe editor: show upload progress",
+   "pages": [
+    "recipe-editor"
+   ]
+  },
+  {
+   "sha": "d4410be",
+   "date": "2026-10-20T16:30:00Z",
+   "author": "Chen Wei",
+   "person": "chen",
+   "message": "(sample) Monitoring: alert on slow searches",
+   "pages": [
+    "monitoring",
+    "search"
+   ]
+  },
+  {
+   "sha": "e5b12f0",
+   "date": "2026-10-20T09:12:00Z",
+   "author": "Dana Okafor",
+   "person": "dana",
+   "message": "(sample) Auth: log why a link was refused",
+   "pages": [
+    "auth-api"
+   ]
+  },
+  {
+   "sha": "f61c7aa",
+   "date": "2026-10-19T14:00:00Z",
+   "author": "Ada Park",
+   "person": "ada",
+   "message": "(sample) Search index: rebuild in batches",
+   "pages": [
+    "search-index"
+   ]
+  }
+ ],
+ "branches": [
+  {
+   "name": "ada/plural-search",
+   "person": "ada",
+   "author": "Ada Park",
+   "last_commit": {
+    "sha": "a1f3c20",
+    "date": "2026-10-22T06:30:00Z",
+    "message": "(sample) Search: match plurals"
+   },
+   "ahead": 3,
+   "pages": [
+    "search",
+    "search-index"
+   ],
+   "pr": {
+    "number": 101,
+    "url": "https://github.com/example/larkspur/pull/101"
+   }
+  },
+  {
+   "name": "eli/tidy-migrations",
+   "person": "eli",
+   "author": "Eli Brandt",
+   "last_commit": {
+    "sha": "b27de91",
+    "date": "2026-10-21T17:40:00Z",
+    "message": "(sample) Database: squash old migrations"
+   },
+   "ahead": 2,
+   "pages": [
+    "database"
+   ],
+   "pr": null
+  }
+ ]
+}

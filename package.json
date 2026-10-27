@@ -1,0 +1,41 @@
+{
+  "name": "hypatia",
+  "version": "0.1.0",
+  "description": "A graph-style team wiki for any git repo, with a who's-working-on-what view.",
+  "keywords": [
+    "wiki",
+    "docs",
+    "knowledge-graph",
+    "obsidian",
+    "team",
+    "github",
+    "markdown",
+    "claude-code"
+  ],
+  "author": "Max Hawksby",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxhawksby/hypatia.git"
+  },
+  "homepage": "https://github.com/maxhawksby/hypatia#readme",
+  "bugs": {
+    "url": "https://github.com/maxhawksby/hypatia/issues"
+  },
+  "bin": {
+    "hypatia": "bin/hypatia.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "site",
+    "skills",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
