@@ -17,7 +17,7 @@ If Node is older than 18 or missing, or this is not a git repo, stop and tell th
 npx --yes hypatia init --dry-run
 ```
 
-The first line says whether the repo is **public** or **private**. Nothing changes yet.
+The first line says whether the repo is **public** or **private**. Nothing changes yet. If it lists **Privacy guard** findings (often a maintainer's email in README.md), the check in step 6 will fail on them; deal with them there.
 
 ## 3. Run init
 
@@ -59,6 +59,14 @@ npx --yes hypatia check
 ```
 
 Fix what it reports and run it again until it prints `Wiki check passed`. Warnings do not fail the check, but fix any "no link leads to it" warning by linking that hub from start-here.
+
+If the privacy guard flags something you did not write (for example an email address already in README.md), show the human the line and ask. If they say it is public and fine to publish, add it to `docs/hypatia.yml`:
+
+```yaml
+allow: [maintainer@example.com]   # the exact value the human approved
+```
+
+Never allow a key, a password or a token: those must be removed.
 
 ## 7. Tell the human
 
