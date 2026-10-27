@@ -1,5 +1,5 @@
 // Tests for the local wiki server (lib/serve.js) and the hypatia CLI: `npm test`.
-// The first ones are ported from go2-fusion's tools/oak-wiki/wiki.test.js.
+// The first ones check the server on its own, the last ones run the CLI.
 "use strict";
 
 const assert = require("assert");
@@ -71,7 +71,7 @@ test("parseArgs reads --port and --no-open", () => {
 });
 
 test("serves index.html with the reload script, the site files and the built data", async () => {
-  const graph = { version: 2, nodes: [{ id: "oak" }] };
+  const graph = { version: 2, nodes: [{ id: "home" }] };
   const s = await start({ graph: () => graph });
   try {
     const index = await get(s.port, "/");
@@ -84,7 +84,7 @@ test("serves index.html with the reload script, the site files and the built dat
     const client = await get(s.port, "/__hypatia/reload.js");
     assert.match(client.body, /EventSource\("\/__hypatia\/events"\)/);
     assert.deepStrictEqual(JSON.parse((await get(s.port, "/graph.json")).body), graph);
-    assert.strictEqual((await get(s.port, "/graph.js")).body, "window.OAK_GRAPH = " + JSON.stringify(graph) + ";\n");
+    assert.strictEqual((await get(s.port, "/graph.js")).body, "window.HYPATIA_GRAPH = " + JSON.stringify(graph) + ";\n");
     assert.strictEqual((await get(s.port, "/nope.txt")).status, 404);
     assert.notStrictEqual((await get(s.port, "/%2e%2e/package.json")).status, 200);
   } finally {
@@ -162,7 +162,7 @@ test("live reload: editing a page rebuilds and reloads; a broken page shows a no
     await until(() => logs.some((m) => /nothing new/.test(m)));
     assert.strictEqual(l.events.filter((e) => e.event === "reload").length, reloads, "no reload when nothing changed");
 
-    write(repo.root, "docs/wiki/stairs.md", "---\ntitle: Stairs\nparent: movement\n---\nOak climbs stairs.\n");
+    write(repo.root, "docs/wiki/stairs.md", "---\ntitle: Stairs\nparent: movement\n---\nClimbing stairs.\n");
     await until(() => l.events.filter((e) => e.event === "reload").length > reloads);
     assert.ok(JSON.parse((await get(s.port, "/graph.json")).body).nodes.some((n) => n.id === "stairs"), "a new page shows up");
   } finally {
@@ -184,7 +184,7 @@ test("hypatia build writes the site and this repo's data, from any folder inside
     assert.strictEqual(r.status, 0, r.stderr);
     assert.match(r.stdout, /5 pages, 4 parent edges, 1 cross links, 2 people/);
     for (const f of ["index.html", "app.js", "style.css", "graph.json", "graph.js"]) assert.ok(fs.existsSync(path.join(out, f)), f);
-    assert.strictEqual(JSON.parse(fs.readFileSync(path.join(out, "graph.json"), "utf8")).repo, "acme/robot-dog");
+    assert.strictEqual(JSON.parse(fs.readFileSync(path.join(out, "graph.json"), "utf8")).repo, "acme/notes-app");
   } finally {
     repo.cleanup();
     fs.rmSync(out, { recursive: true, force: true });
@@ -203,7 +203,7 @@ test("hypatia serve starts on the repo it is run in, and explains a broken wiki"
       await until(() => /Wiki is running/.test(out));
       const port = Number(/localhost:(\d+)/.exec(out)[1]);
       const g = JSON.parse((await get(port, "/graph.json")).body);
-      assert.strictEqual(g.repo, "acme/robot-dog");
+      assert.strictEqual(g.repo, "acme/notes-app");
       assert.match(out, /5 pages/);
     } finally {
       child.kill("SIGTERM");
