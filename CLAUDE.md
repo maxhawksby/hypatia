@@ -11,6 +11,7 @@ Milestone 1 moved the site, builder and local server here and ported them to Nod
 Milestone 2 (branch milestone-2) made them generic: the title, team and colors come from
 the repo, git and GitHub. go2-fusion itself is unchanged and still builds as before from
 its docs/team.yml.
+Milestone 3 (branch milestone-3) added `hypatia init` and the privacy guard.
 
 ## Status
 
@@ -20,8 +21,13 @@ its docs/team.yml.
 
 ## Layout
 
-- bin/hypatia.js - the CLI: `hypatia serve` (local site, live reload), `hypatia build --out <dir>`,
-  `hypatia check`.
+- bin/hypatia.js - the CLI: `hypatia init`, `hypatia serve` (local site, live reload),
+  `hypatia build --out <dir>`, `hypatia check`.
+- lib/init.js - `hypatia init`: starter page, skill, open command; public repos get the Pages
+  workflows and two GitHub settings after a yes. GitHub only through gh (HYPATIA_GH swaps it;
+  tests never run the real one).
+- lib/privacy.js - the privacy guard: patterns, allow list, masking. Private pages are left out
+  in lib/build-graph.js (`publish: true`).
 - lib/build-graph.js - builds graph.json (pages, links, history, branches, GitHub work).
 - lib/team.js - the team: git authors, GitHub logins and collaborators, palette colors, and
   the optional config (docs/hypatia.yml, or the older docs/team.yml). Shape in README.md.
@@ -29,5 +35,5 @@ its docs/team.yml.
 - site/ - the wiki web app (index.html, app.js, style.css), served as is. sample-graph.json
   is a made-up project shown when there is no data.
 - skills/, templates/workflows/ - wiki-keeper skill and Pages workflows as templates with
-  {{PLACEHOLDERS}} (lib/templates.js lists them) that the install (milestone 3) fills in.
+  {{PLACEHOLDERS}} (lib/templates.js lists them) that `hypatia init` fills in.
 - test/generic.test.js - nothing shipped or built may name the project Hypatia came from.

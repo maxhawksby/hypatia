@@ -2,15 +2,39 @@
 
 Hypatia adds a linked team wiki and a who's-working-on-what view to any repo. Work in progress.
 
-Status: milestone 2 - works for any repo: the title, the team and their colors come from git and GitHub. Not installable yet.
+Status: milestone 3 - one command sets it up in a repo, and a privacy guard keeps personal data and keys off the website. Not on npm yet.
 
-From inside a repo that has docs/wiki/ (Node 18+, nothing else):
+From inside any git repo (Node 18+, nothing else):
 
 ```shell
+node ~/personal/hypatia/bin/hypatia.js init --dry-run   # print the plan, change nothing
+node ~/personal/hypatia/bin/hypatia.js init             # set it up (asks before anything public)
 node ~/personal/hypatia/bin/hypatia.js serve     # http://localhost:4410/, reloads when a page changes
 node ~/personal/hypatia/bin/hypatia.js build     # writes the site and its data to _site/
-node ~/personal/hypatia/bin/hypatia.js check     # checks the pages, writes nothing
+node ~/personal/hypatia/bin/hypatia.js check     # checks the pages and the privacy guard, writes nothing
 ```
+
+## Setting it up: `hypatia init`
+
+Every repo gets `docs/wiki/start-here.md` (when it has no wiki pages yet), the wiki-keeper agent skill in `.claude/skills/wiki-keeper/`, and a `wiki` npm script (when there is a package.json) or the one-line command that opens the wiki locally.
+
+A public repo (GitHub says so, or `--public`) also gets, only after a yes at the prompt or `--yes`:
+
+- `.github/workflows/wiki-site.yml` and `wiki-refresh.yml`, which build the site and publish it with GitHub Pages;
+- GitHub Pages turned on with Source: GitHub Actions, if it is off (`POST repos/<repo>/pages`);
+- the repo's About website set to the Pages address, if it is empty (`PATCH repos/<repo>`, `homepage`).
+
+A website already in the About box, or Pages already publishing from a branch, is left alone. A private repo gets no website. Init never overwrites a file and is safe to run again; it says what it left alone.
+
+GitHub has to download Hypatia to build the site, so the workflows are only installed with `--runner "<command>"` naming a Hypatia GitHub can reach (for example `npx --yes <package>`). Until Hypatia is published, the default runner is this computer's copy, which works locally only.
+
+## Privacy guard
+
+`hypatia check` and `hypatia build` scan the pages and the site data (commit messages, branch names, issue titles) for email addresses, phone numbers, student and other ID numbers, and keys (AWS, GitHub, Stripe, Supabase, JSON web tokens, OpenAI, Anthropic, Slack, Google, private key blocks, connection strings with a password). Each finding names the page and line with the value masked, and the build stops without writing anything. `hypatia serve` shows a note in the corner instead and keeps running.
+
+Never reported: the team's own GitHub noreply addresses, example.com/.org/.net/.edu and other reserved test domains, stand-ins like `firstname.lastname@`, and anything under `allow:` in docs/hypatia.yml (an exact value, a domain like `@acme.dev`, or a pattern like `"sk_test_*"`).
+
+A page with `private: true` in its front matter, and every page under it, shows on the local site but is left out of the published build, with its links, backlinks, search entry and team data. A link to it from a published page becomes plain text.
 
 GitHub data (who is working on what, logins, collaborators) is read when `gh` is signed in or `GITHUB_TOKEN` is set. Without it, or without permission, the team comes from git history alone.
 
@@ -23,6 +47,7 @@ Each page is `docs/wiki/<slug>.md` with front matter. README.md is the center pa
 title: Search
 parent: web-app
 code: [web/src/search/**]   # optional: the code this page is about
+private: true               # optional: on the local site only, never on the website
 ---
 ```
 
@@ -34,6 +59,7 @@ To change any of that, add `docs/hypatia.yml` (all keys optional):
 
 ```yaml
 title: Larkspur              # the site's name; default: README.md's first heading, else the repo name
+allow: [help@larkspur.dev]   # values the privacy guard may publish
 only_listed: false           # true: the people below are the whole team
 exclude: [old-intern, Some Bot]   # logins, ids or names to leave out
 people:
