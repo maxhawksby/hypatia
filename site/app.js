@@ -1,7 +1,7 @@
 /* Oak workspace v3: sidebar (page tree, people, recent), quick switcher,
    reading pane (page, connections, ask box, or a teammate's view) and a fixed
    2D map. Pages are grey; a page takes a teammate's color while they work on it.
-   Data: graph.json (scripts/wiki/build_graph.py), else sample-graph.json. */
+   Data: graph.json (built by `hypatia serve` or `hypatia build`), else sample-graph.json. */
 (function () {
   "use strict";
 
@@ -44,7 +44,7 @@
     .catch((err) => {
       $("content").innerHTML = "";
       $("content").append(h("p", { class: "error" },
-        "Could not load the wiki data. Run python3 scripts/wiki/build_graph.py, then reload. (" + err.message + ")"));
+        "Could not load the wiki data. Run hypatia serve in the repo, then reload. (" + err.message + ")"));
     });
 
   function start(data) {
@@ -61,10 +61,10 @@
   function normalize(d) {
     const arr = (x) => (Array.isArray(x) ? x : []);
     const out = {
-      repo: d.repo || "maxhawksby/go2-fusion",
+      repo: d.repo || "", // owner/name on GitHub; empty when the repo is not on GitHub
       branch: d.branch || "master",
       base: d.base || "master",
-      published: d.published !== false,
+      published: d.published !== false && !!d.repo,
       generated_at: d.generated_at || null,
       sample: !!d.sample,
       people: arr(d.people), nodes: arr(d.nodes), edges: arr(d.edges),
