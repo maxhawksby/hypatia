@@ -28,10 +28,14 @@ Milestone 3 added `hypatia init` and the privacy guard.
 
 - bin/hypatia.js - the CLI: `hypatia init`, `hypatia serve` (local site, live reload),
   `hypatia build --out <dir>`, `hypatia check [--base <ref>]`, `hypatia mirror --out <dir>`,
-  `hypatia ping`.
+  `hypatia ping`, `hypatia upgrade`.
 - lib/init.js - `hypatia init`: starter page, skill, open command; public repos get the Pages
   workflows and two GitHub settings after a yes. GitHub only through gh (HYPATIA_GH swaps it;
   tests never run the real one).
+- lib/upgrade.js - `hypatia upgrade`: re-renders the installed skill and workflows from this
+  version's templates (keeps branch and runner), adds wiki-check for a repo with the website,
+  offers `drift: true`. Also the one-line "setup is from an older Hypatia" notice in check and
+  serve. Installed files carry a version stamp and hash (lib/templates.js).
 - lib/privacy.js - the privacy guard: patterns, allow list, masking. Private pages are left out
   in lib/build-graph.js (`publish: true`).
 - lib/build-graph.js - builds graph.json (pages, links, history, branches, GitHub work).
