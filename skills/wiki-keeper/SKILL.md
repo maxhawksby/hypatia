@@ -58,6 +58,7 @@ Write every commit message as one short sentence that says exactly what changed,
 4. Never invent facts. If you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>` instead of guessing.
 5. Keep pages short: a few short paragraphs or bullets. Link to other pages rather than repeating them.
 6. Run `{{HYPATIA}} check` until it prints "Wiki check passed".
+7. If the check says this project's Hypatia setup is from an older version, run `{{HYPATIA}} upgrade --dry-run`, show the human the plan and ask before going on (they decide whether to turn on the drift check, and whether hand-edited files may be replaced). With their okay, run `{{HYPATIA}} upgrade --yes` (add `--no-drift` if they said no to the drift check) and commit the result in the same pull request.
 
 If a change truly does not affect what any page says (a rename, a comment, a refactor with identical behavior), add this line to the pull request description instead of editing the page. The drift check accepts it; the reason is required:
 
