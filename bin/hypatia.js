@@ -7,6 +7,7 @@
 //   hypatia mirror --out <folder>            write the pages as a GitHub Wiki (the Wiki tab)
 //   hypatia ping [--dry-run]                 post a review request or question to Discord (in GitHub Actions)
 //   hypatia init [--yes] [--dry-run]         set Hypatia up in this repo
+//   hypatia upgrade [--yes] [--dry-run]      bring the files init installed up to this version
 //
 // Run it from anywhere inside the repo; it works on the repo's top folder.
 "use strict";
@@ -19,6 +20,7 @@ const { serve, graphScript, SITE } = require("../lib/serve");
 const { loadConfig } = require("../lib/team");
 const privacy = require("../lib/privacy");
 const { init } = require("../lib/init");
+const { upgrade, upgradeNotice } = require("../lib/upgrade");
 const { lint, repoFiles } = require("../lib/lint");
 const drift = require("../lib/drift");
 const { baseRef } = require("../lib/build-graph");
@@ -37,6 +39,13 @@ Usage, from inside a repo:
       --with adds optional GitHub workflows to any repo: check (the wiki
       check on pull requests; public repos get it anyway), mirror (the
       GitHub Wiki tab) and ping (Discord posts).
+  hypatia upgrade [--dry-run] [--yes] [--no-drift] [--public | --private]
+      Brings the files init installed up to this version: rewrites the
+      wiki-keeper skill and the wiki workflows from this version's templates,
+      keeping the repo's branch and runner, adds the pull request check to a
+      repo with the website, and offers to turn on the drift check. Shows the
+      plan and asks first; a file edited by hand is marked, since its edits
+      would be lost. --dry-run only prints the plan.
   hypatia serve [--port <number>] [--no-open]
       Builds the wiki for this repo, serves it at http://localhost:4410/,
       opens your browser and reloads it when README.md, docs/wiki/ or
@@ -204,6 +213,8 @@ async function check(root, argv) {
       if (files) found.errors.push(...drift.coverageProblems(codePages, config.coverage, files));
     }
     for (const w of found.warnings) console.error(`hypatia: warning: ${w}`);
+    const notice = upgradeNotice(root);
+    if (notice) console.error(notice);
     for (const e of found.errors) console.error(`hypatia: ${e}`);
     const { count, pages } = found.todos;
     const todoLine = count ? `${count} TODO( ${count === 1 ? "marker" : "markers"} left in ${pages.length} ${pages.length === 1 ? "page" : "pages"}: ${pages.join(", ")}.` : "";
@@ -248,6 +259,7 @@ async function main(argv) {
   }
   const root = repoRoot(process.cwd());
   if (command === "init") return init(root, rest);
+  if (command === "upgrade") return upgrade(root, rest);
   if (command === "serve") return serve(root, rest);
   if (command === "build") return build(root, rest);
   if (command === "check") return check(root, rest);
