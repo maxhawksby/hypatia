@@ -17,5 +17,8 @@ A wiki is only useful while it is true. Hypatia's answer is to let the coding ag
 - **Commits**: one short sentence that says what changed, because the wiki shows them next to each person's branch.
 - **Privacy**: never put real records, user names, emails or keys on a page. See [the privacy guard](privacy-guard.md).
 - **Finish**: run `hypatia check` until it passes.
+- **Old setup**: when the check says the repo's Hypatia files are from an older version, show the human the `hypatia upgrade --dry-run` plan, and with their okay run the upgrade in the same pull request. They decide on the drift check and on replacing files edited by hand.
+
+The installed skill carries a version stamp after its front matter, so Hypatia can tell when it is out of date. See [Upgrading](installing.md#upgrading).
 
 This repo has the skill installed too, so this wiki is kept by the same rules.

@@ -2,6 +2,8 @@
 
 You are a coding agent (Claude Code, Codex, Cursor or similar) and a human asked you to install Hypatia in the repo you are working in. Hypatia adds a team wiki: Markdown pages in `docs/wiki/`, a map of how the code connects, and a view of who is working on what. Follow these steps in order. Run every command from the repo's top folder.
 
+**Already installed?** If `.claude/skills/wiki-keeper/SKILL.md` exists, update instead of installing: run `npx --yes hypatia upgrade --dry-run`, show the human the plan (it may turn on the drift check and replace files edited by hand), and with their okay run `npx --yes hypatia upgrade --yes` (add `--no-drift` if they want the drift check off). Then go to step 6.
+
 ## 1. Check the basics
 
 ```shell

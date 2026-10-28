@@ -1,7 +1,7 @@
 ---
 title: Installing
 parent: start-here
-code: [lib/init.js, INSTALL-AGENT.md, llms.txt]
+code: [lib/init.js, lib/upgrade.js, lib/templates.js, INSTALL-AGENT.md, llms.txt]
 ---
 
 # Installing
@@ -57,5 +57,24 @@ A website already in the About box, or Pages already publishing from a branch, i
 ## Which command the files name
 
 Everything init writes is committed and shared, so it names Hypatia the way a teammate would run it: `npx hypatia serve` and `npx hypatia check` in the pages, the skill and the `wiki` script, and `npx hypatia@<version>` in the Pages workflow, so the website keeps building with the version it was set up with. `--runner "<command>"` names another command for all of them. This repo uses `--runner "node bin/hypatia.js"`, so its own website always builds with its own latest code.
+
+## Upgrading
+
+Init copies the skill and the workflows into your repo, so a newer Hypatia does not change them by itself. Each file it writes carries a stamp: a comment line with the Hypatia version that wrote it and a short fingerprint of the rest of the file. When the files are older than the Hypatia you run, `hypatia check` (and `hypatia serve`) print one line saying so. The notice never fails the check.
+
+To update them:
+
+```shell
+npx hypatia upgrade --dry-run   # see the plan; nothing changes
+npx hypatia upgrade             # see the plan, then say yes
+```
+
+Upgrade does this, after a yes at the prompt or `--yes`:
+
+- rewrites the wiki-keeper skill and every Hypatia workflow already in `.github/workflows/` from this version, keeping your default branch, config file and runner. A workflow pinned to `npx hypatia@<old>` moves to this version; a custom runner from `--runner` stays as it is;
+- adds `wiki-check.yml` to a repo with the website (`wiki-site.yml`, or `--public`). Mirror and ping workflows are updated only if you have them, never added;
+- offers to turn on the [drift check](writing-pages.md#keeping-pages-in-step-with-the-code) by adding `drift: true` to `docs/hypatia.yml` (or the older `docs/team.yml`), leaving every other line alone. `--no-drift` skips it, and a `drift: false` you set yourself is kept.
+
+The plan marks each file: `~` will be replaced, `+` will be added, `=` already current. A file someone edited by hand is still replaced after the yes, so its line says those edits will be lost; say no if you want to keep them. Files from before stamps (0.2.x) can't show whether they were edited, and their line says that too. Upgrade never changes GitHub settings and never calls GitHub.
 
 Next: [write the first pages](writing-pages.md), or read [how it works](how-it-works.md).
