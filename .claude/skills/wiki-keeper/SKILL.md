@@ -3,6 +3,8 @@ name: wiki-keeper
 description: Keep the team wiki (README.md + docs/wiki/) true to the code. Use whenever code a wiki page documents changes, when a folder or program is added or removed, before opening a pull request, when starting a task (to claim it on the wiki graph), when someone asks to update or check the wiki, to answer wiki questions, or to ask a teammate for review.
 ---
 
+<!-- Made by Hypatia 0.3.0 (#442b2315). Run "hypatia upgrade" to update it. -->
+
 # Wiki keeper
 
 The wiki is a graph: README.md is the center page, hub pages hang off it, and each part of the code has one page under a hub. Pages live in `docs/wiki/<slug>.md`. The site (`node bin/hypatia.js serve`) shows the map, the pages, and who is working on what. When the repo turns on the drift check (`drift: true` in `docs/hypatia.yml`), a pull request fails while a page falls behind its code, so keep pages current as you go.
@@ -49,6 +51,7 @@ Write every commit message as one short sentence that says exactly what changed,
 4. Never invent facts. If you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>` instead of guessing.
 5. Keep pages short: a few short paragraphs or bullets. Link to other pages rather than repeating them.
 6. Run `node bin/hypatia.js check` until it prints "Wiki check passed".
+7. If the check says this project's Hypatia setup is from an older version, run `node bin/hypatia.js upgrade --dry-run`, show the human the plan and ask before going on (they decide whether to turn on the drift check, and whether hand-edited files may be replaced). With their okay, run `node bin/hypatia.js upgrade --yes` (add `--no-drift` if they said no to the drift check) and commit the result in the same pull request.
 
 If a change truly does not affect what any page says (a rename, a comment, a refactor with identical behavior), add this line to the pull request description instead of editing the page. The drift check accepts it; the reason is required:
 
