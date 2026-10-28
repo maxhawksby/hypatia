@@ -14,7 +14,7 @@ Hypatia is one small command-line program with no dependencies. It reads your RE
 - `hypatia upgrade` brings the skill and workflows init copied in up to the running version. `check` and `serve` print one line when they are older. See [Upgrading](installing.md#upgrading).
 - `hypatia serve` builds the wiki in memory and opens it at `http://localhost:4410/`. It watches README.md, `docs/wiki/` and `docs/hypatia.yml`, and the open page reloads by itself when one changes. Nothing is written into the repo. `--port` picks another port, `--no-open` skips the browser.
 - `hypatia build --out <folder>` writes the site and its data (`graph.json`, `graph.js`) to a folder, `_site` by default, ready for GitHub Pages or any static server. Pages marked private are left out.
-- `hypatia check` runs every check a build would, writes nothing, and says what to fix. `--base <ref>` also checks that pages kept up with the code changed since that branch. See [Writing pages](writing-pages.md).
+- `hypatia check` runs every check a build would, writes nothing, and says what to fix. `--base <ref>` also checks that pages kept up with the code changed since that branch. See [Writing pages](writing-pages.md). In a repo without Hypatia it says so and prints the one-line prompt to paste into a coding agent to install it.
 - `hypatia mirror --out <folder>` writes the published pages into a clone of the repo's GitHub Wiki, so the Wiki tab shows them too.
 - `hypatia ping` posts a review request or a wiki question to Discord, from a GitHub Actions event. `--dry-run` prints the post instead.
 

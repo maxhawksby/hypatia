@@ -22,8 +22,9 @@ function files(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 }
 
-// Hypatia's own repo and website addresses (package.json links) are not leftovers.
-const OWN_REPO = /(github\.com\/maxhawksby|maxhawksby\.github\.io)\/hypatia\b/g;
+// Hypatia's own repo, raw-file and website addresses (package.json links, the
+// install guide check points to) are not leftovers.
+const OWN_REPO = /((raw\.githubusercontent|github)\.com\/maxhawksby|maxhawksby\.github\.io)\/hypatia\b/g;
 
 function assertClean(file) {
   const lines = fs.readFileSync(file, "utf8").split("\n");

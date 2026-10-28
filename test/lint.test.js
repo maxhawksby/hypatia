@@ -85,3 +85,18 @@ test("TODO( markers are counted as information, never a failure", () => {
     repo.cleanup();
   }
 });
+
+test("check in a repo without Hypatia says so and gives the install prompt", () => {
+  const repo = makeRepo({ generic: true });
+  try {
+    fs.rmSync(path.join(repo.root, "docs", "wiki"), { recursive: true, force: true });
+    fs.rmSync(path.join(repo.root, ".claude"), { recursive: true, force: true });
+    const r = check(repo.root);
+    assert.strictEqual(r.status, 1);
+    assert.match(r.stderr, /Hypatia isn't set up in this repo yet/);
+    assert.match(r.stderr, /Install Hypatia in this repo by following https:\/\/raw\.githubusercontent\.com\/maxhawksby\/hypatia\/main\/INSTALL-AGENT\.md/);
+    assert.match(r.stderr, /npx hypatia init/);
+  } finally {
+    repo.cleanup();
+  }
+});
