@@ -23,7 +23,8 @@ Each finding names the page and line with the value masked, and the build stops 
 - the team's own GitHub noreply addresses;
 - example.com, example.org, example.net, example.edu and other reserved test domains;
 - stand-ins like `firstname.lastname@`;
-- anything under `allow:` in [the configuration](configuration.md).
+- anything under `allow:` in [the configuration](configuration.md);
+- a person's `discord_id` from the configuration: a long number they chose to publish so the Discord ping can @mention them. Only 17 to 20 digit ids get that far, and the same number anywhere else is still checked.
 
 ## Private pages
 

@@ -105,7 +105,7 @@ test("people: parse the team list", () => {
   assert.deepStrictEqual(PEOPLE.map((p) => p.id), ["max", "sam"]);
   assert.strictEqual(PEOPLE[0].color, "#ff4d5e");
   assert.strictEqual(PEOPLE[0].focus, "Computer vision - YOLO");
-  assert.deepStrictEqual(Object.keys(PEOPLE[1]).sort(), ["color", "focus", "github", "id", "name", "past"]);
+  assert.deepStrictEqual(Object.keys(PEOPLE[1]).sort(), ["color", "discord_id", "focus", "github", "id", "name", "past"]);
   assert.deepStrictEqual(PEOPLE[0].past, ["object-detection"]);
   assert.deepStrictEqual(PEOPLE[1].past, []);
 });

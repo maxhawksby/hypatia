@@ -1,7 +1,7 @@
 ---
 title: Writing pages
 parent: start-here
-code: [lib/lint.js]
+code: [lib/lint.js, lib/drift.js]
 ---
 
 # Writing pages
@@ -26,5 +26,20 @@ A good page explains one part of the code in plain English: what it does for the
 - Every `code:` path or glob matches at least one file in the repo (tracked or new). Otherwise the page points at nothing, usually because the code moved.
 - It warns, without failing, when a hub page is not reachable by links from README.md, and it counts the `TODO(` markers left in the pages.
 - It runs the [privacy guard](privacy-guard.md).
+
+## Keeping pages in step with the code
+
+Two more checks, both off until [the config](configuration.md) turns them on:
+
+- `drift: true`: on a pull request, if code a page's `code:` covers changed but the page did not, the check fails and names the page. When a change truly does not affect what any page says (a rename, a comment), add this line to the pull request description instead:
+
+  ```
+  wiki: no change needed - <reason>
+  ```
+
+  The reason is required. In GitHub Actions, `hypatia check` compares with the branch the pull request goes into, and reads the description from `HYPATIA_PR_BODY` (the [wiki-check workflow](installing.md) sets it). On your computer it compares with origin's default branch, uncommitted work included. `hypatia check --base <ref>` runs it against any branch or commit, config or not; `--no-drift` skips it.
+- `coverage: [src]`: every top-level folder inside `src/` must be claimed by some page's `code:`, so a new folder of code always gets a page.
+
+Private pages count for both: their code can drift too.
 
 `hypatia check` and `hypatia build` fail until a broken link is fixed. While you write, `hypatia serve` keeps the site updating through it: the link shows struck out, and a note lists it. See [how it works](how-it-works.md).
