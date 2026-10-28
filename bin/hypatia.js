@@ -90,6 +90,17 @@ function repoRoot(cwd) {
   return r.status === 0 && r.stdout.trim() ? path.resolve(r.stdout.trim()) : path.resolve(cwd);
 }
 
+// Hypatia is set up when the repo has its wiki folder or its agent skill.
+const installed = (root) => ["docs/wiki", ".claude/skills/wiki-keeper/SKILL.md"].some((rel) => fs.existsSync(path.join(root, rel)));
+
+const NOT_INSTALLED = `hypatia: Hypatia isn't set up in this repo yet.
+
+To install it, paste this into your coding agent (Claude Code, Codex, Cursor):
+
+  Install Hypatia in this repo by following https://raw.githubusercontent.com/maxhawksby/hypatia/main/INSTALL-AGENT.md
+
+Or set it up by hand: npx hypatia init`;
+
 function parseBuildArgs(argv) {
   const opts = { out: "_site" };
   for (let i = 0; i < argv.length; i++) {
@@ -178,6 +189,10 @@ async function check(root, argv) {
   if (opts.help) {
     console.log("hypatia check [--base <ref>] [--no-drift]");
     return 0;
+  }
+  if (!installed(root)) {
+    console.error(NOT_INSTALLED);
+    return 1;
   }
   try {
     const excluded = [];
