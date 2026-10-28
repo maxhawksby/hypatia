@@ -27,7 +27,8 @@ Milestone 3 added `hypatia init` and the privacy guard.
 ## Layout
 
 - bin/hypatia.js - the CLI: `hypatia init`, `hypatia serve` (local site, live reload),
-  `hypatia build --out <dir>`, `hypatia check`.
+  `hypatia build --out <dir>`, `hypatia check [--base <ref>]`, `hypatia mirror --out <dir>`,
+  `hypatia ping`.
 - lib/init.js - `hypatia init`: starter page, skill, open command; public repos get the Pages
   workflows and two GitHub settings after a yes. GitHub only through gh (HYPATIA_GH swaps it;
   tests never run the real one).
@@ -39,8 +40,15 @@ Milestone 3 added `hypatia init` and the privacy guard.
 - lib/serve.js - local server, file watcher, reload events.
 - lib/lint.js - the extra checks in `hypatia check`: code paths that match nothing, hubs README.md
   does not lead to, TODO( markers.
+- lib/drift.js - drift (a PR changed a page's code but not the page; escape line
+  "wiki: no change needed - <reason>") and coverage (every folder under `coverage:` has a page).
+  Both off until docs/hypatia.yml sets `drift: true` / `coverage: [src]`; `check --base` forces drift.
+- lib/mirror.js - `hypatia mirror`: published pages into a GitHub Wiki clone (wiki-mirror workflow).
+- lib/ping.js - `hypatia ping`: Discord posts for review requests and questions (wiki-ping
+  workflow); @mentions people's opt-in `discord_id` from the config, which graph.json carries.
 - site/ - the wiki web app (index.html, app.js, style.css), served as is. sample-graph.json
   is a made-up project shown when there is no data.
-- skills/, templates/workflows/ - wiki-keeper skill and Pages workflows as templates with
-  {{PLACEHOLDERS}} (lib/templates.js lists them) that `hypatia init` fills in.
+- skills/, templates/workflows/ - wiki-keeper skill and workflows as templates with
+  {{PLACEHOLDERS}} (lib/templates.js lists them) that `hypatia init` fills in. Public repos get
+  wiki-site, wiki-refresh and wiki-check; `init --with check,mirror,ping` adds them to any repo.
 - test/generic.test.js - nothing shipped or built may name the project Hypatia came from.

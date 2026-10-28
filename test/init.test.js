@@ -171,8 +171,8 @@ test("a dry run prints the plan and changes nothing, on disk or on GitHub", asyn
     assert.deepStrictEqual(snapshot(repo.root), before);
     assert.deepStrictEqual(gh.writes(), []);
     assert.deepStrictEqual(r.asked, [], "a dry run asks nothing");
-    assert.match(r.out, /Dry run: nothing was changed\. Run it without --dry-run to do the 7 \+ steps\./);
-    for (const step of ["docs/wiki/start-here.md", SKILL, "package.json", SITE_WORKFLOW, ".github/workflows/wiki-refresh.yml", "GitHub: Pages", "GitHub: About website"]) {
+    assert.match(r.out, /Dry run: nothing was changed\. Run it without --dry-run to do the 8 \+ steps\./);
+    for (const step of ["docs/wiki/start-here.md", SKILL, "package.json", SITE_WORKFLOW, ".github/workflows/wiki-refresh.yml", ".github/workflows/wiki-check.yml", "GitHub: Pages", "GitHub: About website"]) {
       assert.match(r.out, new RegExp(`\\+ ${step.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}`));
     }
     assert.match(r.out, /set to https:\/\/acme\.github\.io\/notes-app\//);
@@ -371,4 +371,28 @@ test("helpers: local runners, the Pages address and the package.json edit", () =
   assert.strictEqual(pagesUrl("acme/Acme.github.io"), "https://acme.github.io/");
   assert.strictEqual(withWikiScript('{\n\t"name": "x"\n}', "w serve"), '{\n\t"name": "x",\n\t"scripts": {\n\t\t"wiki": "w serve"\n\t}\n}');
   assert.throws(() => withWikiScript("[1]", "w"), /not a JSON object/);
+});
+
+test("--with adds optional workflows to a private repo too, filled in, and never twice", async () => {
+  const repo = makeRepo({ generic: true });
+  try {
+    const gh = fakeGh({ visibility: "PRIVATE" });
+    const r = await run(repo.root, ["--runner", RUNNER, "--with", "check,mirror", "--with=ping"], { gh });
+    assert.strictEqual(r.code, 0, r.out);
+    for (const name of ["check", "mirror", "ping"]) {
+      const text = read(repo.root, `.github/workflows/wiki-${name}.yml`);
+      assert.deepStrictEqual(templates.placeholders(text), [], name);
+      assert.match(text, new RegExp(`${RUNNER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} (check|mirror|ping)`), name);
+    }
+    assert.match(read(repo.root, ".github/workflows/wiki-check.yml"), /branches: \[main\]/);
+    assert.ok(!exists(repo.root, SITE_WORKFLOW), "still no website for a private repo");
+    assert.deepStrictEqual(gh.writes(), []);
+    const again = await run(repo.root, ["--runner", RUNNER, "--with", "mirror"], { gh });
+    assert.match(again.out, /= \.github\/workflows\/wiki-mirror\.yml\s+already there; left as is/);
+    const bad = await run(repo.root, ["--with", "slack"], { gh });
+    assert.strictEqual(bad.code, 2);
+    assert.match(bad.out, /--with takes check, mirror, ping/);
+  } finally {
+    repo.cleanup();
+  }
 });

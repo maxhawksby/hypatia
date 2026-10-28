@@ -3,7 +3,9 @@
 //
 //   hypatia serve [--port <n>] [--no-open]   open this repo's wiki locally, with live reload
 //   hypatia build [--out <folder>]           write the site and its data to a folder (default _site)
-//   hypatia check                            check the pages and the privacy guard without writing anything
+//   hypatia check [--base <ref>] [--no-drift] check the pages and the privacy guard without writing anything
+//   hypatia mirror --out <folder>            write the pages as a GitHub Wiki (the Wiki tab)
+//   hypatia ping [--dry-run]                 post a review request or question to Discord (in GitHub Actions)
 //   hypatia init [--yes] [--dry-run]         set Hypatia up in this repo
 //
 // Run it from anywhere inside the repo; it works on the repo's top folder.
@@ -17,17 +19,24 @@ const { serve, graphScript, SITE } = require("../lib/serve");
 const { loadConfig } = require("../lib/team");
 const privacy = require("../lib/privacy");
 const { init } = require("../lib/init");
-const { lint } = require("../lib/lint");
+const { lint, repoFiles } = require("../lib/lint");
+const drift = require("../lib/drift");
+const { baseRef } = require("../lib/build-graph");
+const { mirrorCommand } = require("../lib/mirror");
+const { pingCommand } = require("../lib/ping");
 
 const HELP = `Hypatia - a graph-style team wiki for any git repo.
 
 Usage, from inside a repo:
-  hypatia init [--dry-run] [--yes] [--public | --private] [--runner "<command>"]
+  hypatia init [--dry-run] [--yes] [--public | --private] [--runner "<command>"] [--with check,mirror,ping]
       Sets Hypatia up in this repo: a docs/wiki/ folder with a starter page,
       the wiki-keeper agent skill, and a way to open the wiki locally. A
       public repo also gets the GitHub Pages workflow and the website link in
       its About box, after you say yes. Never overwrites a file; safe to run
       again. --dry-run only prints the plan.
+      --with adds optional GitHub workflows to any repo: check (the wiki
+      check on pull requests; public repos get it anyway), mirror (the
+      GitHub Wiki tab) and ping (Discord posts).
   hypatia serve [--port <number>] [--no-open]
       Builds the wiki for this repo, serves it at http://localhost:4410/,
       opens your browser and reloads it when README.md, docs/wiki/ or
@@ -37,12 +46,28 @@ Usage, from inside a repo:
       _site by default, ready for GitHub Pages or any static server. Pages
       marked "private: true" are left out. Stops, writing nothing, when the
       privacy guard finds an email, phone number, ID number or key.
-  hypatia check
+  hypatia check [--base <ref>] [--no-drift]
       Checks the wiki pages (front matter, parents, links, code: paths that
       match no file) and runs the privacy guard, and says what to fix. Also
       warns about hub pages README.md does not lead to, and counts TODO(
-      markers. Writes nothing; exits with 1 when
-      a page has a problem.
+      markers. Writes nothing; exits with 1 when a page has a problem.
+      With "drift: true" in docs/hypatia.yml, or with --base, it also fails
+      when code a page's code: covers changed since <ref> (default: the pull
+      request's base branch, else origin's default branch) but the page did
+      not, unless the pull request description (HYPATIA_PR_BODY or PR_BODY)
+      has the line "wiki: no change needed - <reason>". With "coverage: src"
+      it fails when a top-level folder in src/ has no page.
+  hypatia mirror --out <folder> [--repo <owner/name>] [--branch <name>]
+      Writes the published pages into a clone of the repo's GitHub Wiki
+      (<repo>.wiki.git): README.md becomes Home, links point at wiki pages or
+      GitHub, and each page links back to its file. Removes pages that are
+      gone. Stops, writing nothing, when the privacy guard finds something.
+  hypatia ping [--dry-run] [--event <file>]
+      In GitHub Actions: posts to Discord when a pull request asks for review
+      or an issue is labelled "question", @mentioning people whose
+      discord_id is in docs/hypatia.yml. Webhooks come from the
+      DISCORD_REVIEW_WEBHOOK_URL / DISCORD_QUESTIONS_WEBHOOK_URL secrets;
+      with none set it says so and passes. --dry-run prints the post.
 
 The team comes from git history, and from GitHub when it can be read. The
 optional docs/hypatia.yml sets the title, names, colors and focus lines.
@@ -106,15 +131,44 @@ async function build(root, argv) {
   return 0;
 }
 
+function parseCheckArgs(argv) {
+  const opts = { base: null, noDrift: false };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--base" || a.startsWith("--base=")) {
+      opts.base = a.includes("=") ? a.slice(a.indexOf("=") + 1) : argv[++i];
+      if (!opts.base) throw new Error("--base needs a branch or commit, e.g. --base origin/main.");
+    } else if (a === "--no-drift") opts.noDrift = true;
+    else if (a === "--help" || a === "-h") opts.help = true;
+    else throw new Error(`Unknown option "${a}". Try --base <ref> or --no-drift.`);
+  }
+  return opts;
+}
+
+// The ref the drift check compares with, and whether it was asked for
+// (--base) or worked out (config "drift: true"): { base, asked } or null.
+function driftBase(root, opts, config, env = process.env) {
+  if (opts.noDrift) return null;
+  if (opts.base) return { base: opts.base, asked: true };
+  if (!config.drift) return null;
+  // on a pull request GitHub Actions names the branch it goes into
+  if (env.GITHUB_BASE_REF) return { base: `origin/${env.GITHUB_BASE_REF}`, asked: true };
+  const ref = baseRef(root);
+  return spawnSync("git", ["rev-parse", "--verify", "--quiet", ref], { cwd: root, windowsHide: true }).status === 0 ? { base: ref, asked: false } : null;
+}
+
 // `hypatia check`: the same checks as a build, nothing written, no GitHub.
 async function check(root, argv) {
-  if (argv.includes("--help") || argv.includes("-h")) {
-    console.log("hypatia check");
-    return 0;
-  }
-  if (argv.length) {
-    console.error(`Unknown option "${argv[0]}". hypatia check takes no options.`);
+  let opts;
+  try {
+    opts = parseCheckArgs(argv);
+  } catch (err) {
+    console.error(err.message);
     return 2;
+  }
+  if (opts.help) {
+    console.log("hypatia check [--base <ref>] [--no-drift]");
+    return 0;
   }
   try {
     const excluded = [];
@@ -127,6 +181,28 @@ async function check(root, argv) {
       console.error(`hypatia: private pages (never published) mention:\n${privacy.describeHits(local).map((l) => "  " + l).join("\n")}`);
     }
     const found = lint(root, graph);
+    const config = loadConfig(root);
+    const codePages = drift.codePages(root, graph, excluded.map((e) => e.path));
+    const compare = driftBase(root, opts, config);
+    let driftNote = "";
+    if (compare) {
+      let changed = null;
+      try {
+        changed = drift.changedFiles(root, compare.base);
+      } catch (err) {
+        if (compare.asked) {
+          found.errors.push(`could not compare this branch with '${compare.base}' (${err.message}). Run 'git fetch origin' (in GitHub Actions, check out with fetch-depth: 0), or pass --base <branch>.`);
+        }
+      }
+      if (changed) {
+        found.errors.push(...drift.driftProblems(codePages, changed, process.env.HYPATIA_PR_BODY || process.env.PR_BODY || ""));
+        driftNote = ` Pages kept up with the code changed since ${compare.base}.`;
+      }
+    }
+    if (config.coverage.length) {
+      const files = repoFiles(root);
+      if (files) found.errors.push(...drift.coverageProblems(codePages, config.coverage, files));
+    }
     for (const w of found.warnings) console.error(`hypatia: warning: ${w}`);
     for (const e of found.errors) console.error(`hypatia: ${e}`);
     const { count, pages } = found.todos;
@@ -138,7 +214,7 @@ async function check(root, argv) {
       return 1;
     }
     const kept = excluded.length ? `, ${excluded.length} private ${excluded.length === 1 ? "page" : "pages"} left out` : "";
-    console.log(`Wiki check passed: ${graph.nodes.length} pages, ${graph.edges.length} links and parents${kept}, no personal data or keys found.`);
+    console.log(`Wiki check passed: ${graph.nodes.length} pages, ${graph.edges.length} links and parents${kept}, no personal data or keys found.${driftNote}`);
     if (todoLine) console.log(todoLine);
     return 0;
   } catch (err) {
@@ -175,6 +251,8 @@ async function main(argv) {
   if (command === "serve") return serve(root, rest);
   if (command === "build") return build(root, rest);
   if (command === "check") return check(root, rest);
+  if (command === "mirror") return mirrorCommand(root, rest);
+  if (command === "ping") return pingCommand(root, rest);
   console.error(`Unknown command "${command}".\n\n${HELP}`);
   return 2;
 }

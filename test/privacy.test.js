@@ -261,3 +261,31 @@ test("local serve: still runs with a seeded page, and hands the warning to the b
     repo.cleanup();
   }
 });
+
+test("a discord_id people opt into reaches graph.json and passes the guard; a bad one is left out; real ID numbers still stop", () => {
+  const repo = makeRepo({ generic: true });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "hypatia-out-"));
+  try {
+    const id = "1" + r("0", 7) + "98765432" + "12"; // 18 digits, like a Discord user id
+    write(repo.root, "docs/hypatia.yml", `people:\n  - github: bencarter\n    name: Ben Carter\n    discord_id: "${id}"\n  - github: ana-gh\n    name: Ana Lopez\n    discord_id: ben#1234\n`);
+    const env = { ...process.env };
+    delete env.GITHUB_TOKEN;
+    const built = spawnSync(process.execPath, [CLI, "build", "--out", out], { cwd: repo.root, env, encoding: "utf8" });
+    assert.strictEqual(built.status, 0, built.stderr);
+    assert.match(built.stderr, /ana-gh has discord_id "ben#1234"; use the numeric user id/);
+    const people = JSON.parse(fs.readFileSync(path.join(out, "graph.json"), "utf8")).people;
+    assert.strictEqual(people.find((p) => p.github === "bencarter").discord_id, id);
+    assert.ok(!("discord_id" in people.find((p) => p.github === "ana-gh")), "the bad one is left out");
+    assert.ok(people.filter((p) => !["bencarter", "ana-gh"].includes(p.github)).every((p) => !("discord_id" in p)), "nobody gets one they did not give");
+    // the same number elsewhere in the site data is still checked
+    assert.deepStrictEqual(privacy.dataStrings({ people: [{ discord_id: id }] }), []);
+    assert.deepStrictEqual(privacy.dataStrings({ people: [{ discord_id: "student ID 1234567" }] }).length, 1);
+    write(repo.root, "docs/wiki/senses.md", "---\ntitle: Senses\nparent: home\n---\nMy student ID: 12345678.\n");
+    const blocked = spawnSync(process.execPath, [CLI, "check"], { cwd: repo.root, env, encoding: "utf8" });
+    assert.strictEqual(blocked.status, 1);
+    assert.match(blocked.stderr, /ID number/);
+  } finally {
+    repo.cleanup();
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});

@@ -14,8 +14,9 @@ const { makeRepo } = require("./helpers");
 
 const ROOT = path.join(__dirname, "..");
 const CLI = path.join(ROOT, "bin", "hypatia.js");
-// Words from the project Hypatia was extracted from.
-const FORBIDDEN = /oak|go2|team 48|\bros\b|ros 2|robot|maxhawksby|discord|check_wiki|python/i;
+// Words from the project Hypatia was extracted from. Discord is not one of
+// them: `hypatia ping` posts there for any team.
+const FORBIDDEN = /oak|go2|team 48|\bros\b|ros 2|robot|maxhawksby|check_wiki|python|feature-revisions/i;
 
 function files(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]));

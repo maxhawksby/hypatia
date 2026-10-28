@@ -14,7 +14,7 @@ description: Keep the team wiki (README.md + {{WIKI_DIR}}/) true to the code. Us
 
 # Wiki keeper
 
-The wiki is a graph: README.md is the center page, hub pages hang off it, and each part of the code has one page under a hub. Pages live in `{{WIKI_DIR}}/<slug>.md`. The site (`{{HYPATIA}} serve`) shows the map, the pages, and who is working on what.
+The wiki is a graph: README.md is the center page, hub pages hang off it, and each part of the code has one page under a hub. Pages live in `{{WIKI_DIR}}/<slug>.md`. The site (`{{HYPATIA}} serve`) shows the map, the pages, and who is working on what. When the repo turns on the drift check (`drift: true` in `{{CONFIG_FILE}}`), a pull request fails while a page falls behind its code, so keep pages current as you go.
 
 Every page starts with front matter:
 
@@ -47,23 +47,25 @@ Write every commit message as one short sentence that says exactly what changed,
 
 ## Before opening a pull request (or whenever code changed)
 
-1. `git fetch origin`, then list what changed: `git diff --name-only origin/{{DEFAULT_BRANCH}}...HEAD` (plus uncommitted work: `git status --short`).
-2. Find the pages whose `code:` paths cover those files, read the diff for that code (`git diff origin/{{DEFAULT_BRANCH}}...HEAD -- <paths>`) and update each page in plain English a college freshman would follow:
+1. `git fetch origin`, then run `{{HYPATIA}} check --base origin/{{DEFAULT_BRANCH}}`. Besides the usual checks, it names every page whose `code:` paths changed (committed or not) while the page did not.
+2. For each page it names, read the diff for that code (`git diff origin/{{DEFAULT_BRANCH}}...HEAD -- <paths>`) and update each page in plain English a college freshman would follow:
    - what that part does for the project,
    - what it uses (other parts, services, data, hardware),
    - how it breaks (known failure modes and what they look like).
    Not code internals: no function names or line-by-line walkthroughs.
-3. New part of the code: create `{{WIKI_DIR}}/<slug>.md` with title, parent (its hub) and `code:` paths, then link it from the hub page.
+3. New part of the code (a new top-level folder, package or service): create `{{WIKI_DIR}}/<slug>.md` with title, parent (its hub) and `code:` paths that cover the whole folder (`code: [src/<folder>/**]`), then link it from the hub page. With `coverage:` set in `{{CONFIG_FILE}}`, the check fails until every folder there has a page.
    Removed part: delete its page and its link from the hub.
 4. Never invent facts. If you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>` instead of guessing.
 5. Keep pages short: a few short paragraphs or bullets. Link to other pages rather than repeating them.
 6. Run `{{HYPATIA}} check` until it prints "Wiki check passed".
 
-If a change truly does not affect what any page says (a rename, a comment, a refactor with identical behavior), add this line to the pull request description instead of editing the page:
+If a change truly does not affect what any page says (a rename, a comment, a refactor with identical behavior), add this line to the pull request description instead of editing the page. The drift check accepts it; the reason is required:
 
 ```
 wiki: no change needed - <reason>
 ```
+
+Never use it to skip a page that is now wrong.
 
 ## Answering questions
 
@@ -86,12 +88,14 @@ Open the pull request (`gh pr create`), using the repo's pull request template i
 - **How to test**: steps a teammate can follow.
 - **Wiki**: the page you updated, or `wiki: no change needed - <reason>` on its own line.
 
-Request a teammate: `gh pr create --reviewer <login>` or `gh pr edit <n> --add-reviewer <login>`. The People list on the site shows who is on the team and their GitHub logins (names, colors and focus lines can be set in `{{CONFIG_FILE}}`). Label nothing extra: the site shows the review request.
+Request a teammate: `gh pr create --reviewer <login>` or `gh pr edit <n> --add-reviewer <login>`. The People list on the site shows who is on the team and their GitHub logins (names, colors and focus lines can be set in `{{CONFIG_FILE}}`). Label nothing extra: the site shows the review request, and when the repo has the wiki-ping workflow the request is also posted to the team's Discord.
 
 ## What `{{HYPATIA}} check` checks
 
 - every page has a title and a parent that exists, and page names are lowercase words joined by '-';
 - every link from a wiki page, and every link into {{WIKI_DIR}}/, works (README.md's links to other repo files only warn);
 - every `code:` path or glob matches at least one file in the repo;
-- following parents from any page reaches README.md (no orphans, no loops).
+- following parents from any page reaches README.md (no orphans, no loops);
+- with `drift: true` in `{{CONFIG_FILE}}` (on pull requests) or `--base <ref>`: every page whose `code:` paths changed was changed too, unless the pull request has the line above;
+- with `coverage:` in `{{CONFIG_FILE}}`: every top-level folder in those folders is claimed by some page's `code:`.
 - warns when a hub page (parent: home) is not reachable by links from README.md, and counts `TODO(` markers.

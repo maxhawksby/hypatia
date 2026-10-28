@@ -10,7 +10,7 @@ The team view answers "who is working on what?" without anyone filling in a stat
 
 ## Who is on the team
 
-Everyone who committed is on the team (bots left out), joined across their emails and GitHub login, plus the repo's GitHub collaborators when the token may list them. Each person gets a color from a fixed palette, picked from their id, so it stays the same every build. Names, colors and a "focus" line can be set in [the configuration](configuration.md).
+Everyone who committed is on the team (bots left out), joined across their emails and GitHub login, plus the repo's GitHub collaborators when the token may list them. Each person gets a color from a fixed palette, picked from their id, so it stays the same every build. Names, colors, a "focus" line and a Discord id (for the optional Discord ping) can be set in [the configuration](configuration.md).
 
 ## What they are working on
 

@@ -20,9 +20,16 @@ people:
     color: "#ff4d5e"
     focus: Search that understands ingredients
     past: [search]           # pages they worked on that git may not show
+    discord_id: "123456789012345678"   # optional: lets the Discord ping @mention them
+drift: true                  # pull requests must update the pages whose code they change
+coverage: [src]              # every top-level folder in src/ needs a page
 ```
 
 `allow:` takes an exact value, a domain like `@acme.dev`, or a pattern like `"sk_test_*"`. Only list values that are safe to publish, such as a public support address; see [the privacy guard](privacy-guard.md).
+
+`discord_id` is the numeric Discord user id (Discord: Settings > Advanced > Developer Mode, then right-click the name > Copy User ID). It goes on the website with the person, so only people who want pings should add theirs. Anything that is not a 17 to 20 digit number is left out with a warning.
+
+`drift:` and `coverage:` are off until you turn them on; see [writing pages](writing-pages.md#keeping-pages-in-step-with-the-code).
 
 An older `docs/team.yml` (a `people:` list in the same shape) still works. It is read when there is no `docs/hypatia.yml`, and it lists the whole team, as if it said `only_listed: true`.
 

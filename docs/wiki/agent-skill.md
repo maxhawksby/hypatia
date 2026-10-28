@@ -10,7 +10,7 @@ A wiki is only useful while it is true. Hypatia's answer is to let the coding ag
 
 ## What it tells the agent
 
-- **Before a pull request**: find the pages whose `code:` paths cover the changed files and update them in plain English: what the part does, what it uses, how it breaks. A new part of the code gets a new page, linked from its hub.
+- **Before a pull request**: find the pages whose `code:` paths cover the changed files and update them in plain English: what the part does, what it uses, how it breaks. A new part of the code gets a new page, linked from its hub. When a change truly does not affect a page, say so in the pull request with `wiki: no change needed - <reason>`, which the [drift check](writing-pages.md#keeping-pages-in-step-with-the-code) accepts.
 - **Never invent facts**: write `TODO(owner): <question>` instead of guessing.
 - **When starting a task**: label the GitHub issue `wiki:<slug>` and assign itself, so [the team view](team-view.md) shows the work.
 - **Questions**: answer "Ask the team" questions as comments on their issues.
