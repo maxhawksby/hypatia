@@ -78,3 +78,22 @@ test("the skill tells agents to check pages with hypatia, and keeps people's dat
   const app = fs.readFileSync(path.join(ROOT, "site", "app.js"), "utf8");
   assert.match(app, /Run `hypatia check` until it passes/);
 });
+
+test("workflow templates never put a GitHub expression inside a shell script, and the mirror runs on the default branch only", () => {
+  for (const rel of templates.TEMPLATES.filter((t) => t.endsWith(".yml"))) {
+    const lines = templates.read(rel).split("\n");
+    let runIndent = null; // indent of the current run: key, while inside its script
+    lines.forEach((line, i) => {
+      const indent = line.length - line.trimStart().length;
+      if (runIndent !== null && line.trim() && indent <= runIndent) runIndent = null;
+      const run = /^(\s*)(?:- )?run:\s*(.*)$/.exec(line);
+      if (run) {
+        assert.doesNotMatch(run[2], /\$\{\{/, `${rel}:${i + 1}`);
+        if (run[2].trim() === "|" || run[2].trim() === ">") runIndent = run[1].length;
+      } else if (runIndent !== null) assert.doesNotMatch(line, /\$\{\{/, `${rel}:${i + 1}: ${line.trim()}`);
+    });
+  }
+  const mirror = templates.read("templates/workflows/wiki-mirror.yml");
+  assert.match(mirror, /if: github\.ref == format\('refs\/heads\/\{0\}', github\.event\.repository\.default_branch\)/);
+  assert.doesNotMatch(mirror, /ref_name/);
+});

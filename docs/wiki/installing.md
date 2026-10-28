@@ -51,8 +51,8 @@ A website already in the About box, or Pages already publishing from a branch, i
 `--with` adds GitHub workflows to any repo, public or private, because you asked for them (comma separated, e.g. `npx hypatia init --with check,mirror`):
 
 - `check`: the pull request check above, for a private repo;
-- `mirror`: `wiki-mirror.yml` copies the published pages to the repo's GitHub Wiki tab after each merge, with `hypatia mirror`. README.md becomes Home, links point at wiki pages or GitHub, and each page links back to its file. Turn on Wikis and create one page by hand first; the workflow says how.
-- `ping`: `wiki-ping.yml` posts to Discord with `hypatia ping` when a pull request asks for review (Who, What, Why, Before and After from its description, the pages it touches, the link) or an issue is labelled `question` (asking whoever works on the page). People with a `discord_id` in [the configuration](configuration.md) are @mentioned. It needs a webhook secret, `DISCORD_REVIEW_WEBHOOK_URL` (and optionally `DISCORD_QUESTIONS_WEBHOOK_URL`); without one it passes quietly. It runs from the default branch and never runs a pull request's code.
+- `mirror`: `wiki-mirror.yml` copies the published pages to the repo's GitHub Wiki tab after each merge, with `hypatia mirror`. README.md becomes Home, links point at wiki pages or GitHub, and each page links back to its file. It mirrors only the default branch. Turn on Wikis and create one page by hand first; the workflow says how.
+- `ping`: `wiki-ping.yml` posts to Discord with `hypatia ping` when a pull request asks for review (Who, What, Why, Before and After from its description, the pages it touches, the link) or an issue is labelled `question` (asking whoever works on the page). People with a `discord_id` in [the configuration](configuration.md) are @mentioned, and only they: a mention typed in an issue title stays plain text. It needs a webhook secret, `DISCORD_REVIEW_WEBHOOK_URL` (and optionally `DISCORD_QUESTIONS_WEBHOOK_URL`); without one it passes quietly. It runs from the default branch and never runs a pull request's code.
 
 ## Which command the files name
 
