@@ -5,6 +5,7 @@
 
 const assert = require("assert");
 const fs = require("fs");
+const http = require("http");
 const os = require("os");
 const path = require("path");
 const test = require("node:test");
@@ -245,6 +246,44 @@ test("hypatia ping: no webhook passes quietly; --dry-run builds the real post fr
     // Ben changed the keyboard teleop page last, so he is asked, by his id
     assert.match(lines.join("\n"), new RegExp(`Would post to Discord:[\\s\\S]*Can you help\\? <@${DISCORD_ID}>`));
   } finally {
+    repo.cleanup();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a question can ping only the people it asks: text in the issue title stays plain, and that is what is sent", async () => {
+  const sneaky = issue(["question", "wiki:search"], { title: "<@999999999999999999> @everyone @here <@&111111111111111111> help" });
+  const [, payload] = ping.buildMessage("issues", { action: "opened", issue: sneaky }, GRAPH);
+  assert.deepStrictEqual(ping.requestBody(payload).allowed_mentions, { parse: [], users: [DISCORD_ID] });
+  const [, review] = ping.buildMessage("pull_request_target", prEvent("opened", { title: "<@999999999999999999> @everyone" }), GRAPH);
+  assert.deepStrictEqual(ping.requestBody(review).allowed_mentions, { parse: [], users: [] }, "a review post pings nobody");
+
+  // the body that really goes over the wire, to a stand-in webhook
+  const repo = makeRepo({ generic: true });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hypatia-ping-"));
+  const bodies = [];
+  const server = http.createServer((req, res) => {
+    let data = "";
+    req.on("data", (c) => (data += c));
+    req.on("end", () => {
+      bodies.push(JSON.parse(data));
+      res.writeHead(204).end();
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    write(repo.root, "docs/hypatia.yml", `people:\n  - github: bencarter\n    name: Ben Carter\n    discord_id: "${DISCORD_ID}"\n`);
+    commit(repo.root, BEN, "Config: Ben's chat id");
+    const event = path.join(dir, "event.json");
+    fs.writeFileSync(event, JSON.stringify({ action: "opened", issue: { ...sneaky, labels: [{ name: "question" }, { name: "wiki:keyboard-teleop" }] } }));
+    const env = { GITHUB_EVENT_NAME: "issues", GITHUB_EVENT_PATH: event, DISCORD_QUESTIONS_WEBHOOK_URL: `http://127.0.0.1:${server.address().port}/hook` };
+    const code = await ping.pingCommand(repo.root, [], { env, log: () => {}, error: () => {} });
+    assert.strictEqual(code, 0);
+    assert.strictEqual(bodies.length, 1);
+    assert.deepStrictEqual(bodies[0].allowed_mentions, { parse: [], users: [DISCORD_ID] });
+    assert.match(bodies[0].content, /<@999999999999999999> @everyone/, "the title is shown, as text");
+  } finally {
+    server.close();
     repo.cleanup();
     fs.rmSync(dir, { recursive: true, force: true });
   }

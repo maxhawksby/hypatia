@@ -37,7 +37,7 @@ Two more checks, both off until [the config](configuration.md) turns them on:
   wiki: no change needed - <reason>
   ```
 
-  The reason is required. In GitHub Actions, `hypatia check` compares with the branch the pull request goes into, and reads the description from `HYPATIA_PR_BODY` (the [wiki-check workflow](installing.md) sets it). On your computer it compares with origin's default branch, uncommitted work included. `hypatia check --base <ref>` runs it against any branch or commit, config or not; `--no-drift` skips it.
+  The reason is required, on the same line. A moved file counts at its old place and its new one, so moving code out of a folder flags that folder's page too. In GitHub Actions, `hypatia check` compares with the branch the pull request goes into, and reads the description from `HYPATIA_PR_BODY` (the [wiki-check workflow](installing.md) sets it). On your computer it compares with origin's default branch, uncommitted work included. `hypatia check --base <ref>` runs it against any branch or commit, config or not; `--no-drift` skips it.
 - `coverage: [src]`: every top-level folder inside `src/` must be claimed by some page's `code:`, so a new folder of code always gets a page.
 
 Private pages count for both: their code can drift too.

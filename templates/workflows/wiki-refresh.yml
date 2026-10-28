@@ -24,10 +24,11 @@ jobs:
       - name: Rebuild the wiki site from {{DEFAULT_BRANCH}}
         env:
           GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           # Before the wiki lands on the default branch there is nothing to rebuild yet.
           if ! gh workflow view wiki-site.yml --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "The wiki site workflow isn't on {{DEFAULT_BRANCH}} yet; nothing to refresh."
             exit 0
           fi
-          gh workflow run wiki-site.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.event.repository.default_branch }}"
+          gh workflow run wiki-site.yml --repo "$GITHUB_REPOSITORY" --ref "$DEFAULT_BRANCH"

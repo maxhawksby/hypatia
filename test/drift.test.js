@@ -160,3 +160,28 @@ test("coverage: helpers ignore files at the top, dot folders and ignored files, 
   assert.deepStrictEqual(drift.driftProblems(pages, ["pkgs/a/x.js", "docs/wiki/a.md"]), []);
   assert.strictEqual(drift.driftProblems(pages, ["pkgs/a/1", "pkgs/a/2", "pkgs/a/3", "pkgs/a/4"])[0].includes("and 1 more"), true);
 });
+
+test("drift: moving a file between two covered folders flags both pages, even with files left behind", () => {
+  const repo = branchRepo();
+  try {
+    // src/object_detection/README.md stays, so the old folder is not empty
+    git(repo.root, ["mv", DETECTOR, "src/keyboard_teleop/detector.py"]);
+    write(repo.root, "docs/wiki/keyboard-teleop.md", read(repo.root, "docs/wiki/keyboard-teleop.md") + "\nIt detects too now.\n");
+    commit(repo.root, BEN, "Move the detector into teleop");
+    const r = check(repo.root, ["--base", "master"]);
+    assert.strictEqual(r.code, 1, r.out);
+    assert.match(r.out, /You changed src\/object_detection\/detector\.py, but its wiki page docs\/wiki\/object-detection\.md did not change/);
+    assert.doesNotMatch(r.out, /keyboard-teleop\.md did not change/);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("drift: the escape line's reason must be on the same line", () => {
+  const pages = [{ path: "docs/wiki/a.md", code: ["pkgs/a/**"] }];
+  const changed = ["pkgs/a/x.js"];
+  assert.strictEqual(drift.driftProblems(pages, changed, "wiki: no change needed -\nbecause reasons").length, 1);
+  assert.strictEqual(drift.driftProblems(pages, changed, "wiki: no change needed\n- because reasons").length, 1);
+  assert.strictEqual(drift.driftProblems(pages, changed, "wiki: no change needed - \r\nreason").length, 1);
+  assert.strictEqual(drift.driftProblems(pages, changed, "Intro.\n  wiki:  no change needed  -  a rename\n").length, 0);
+});
