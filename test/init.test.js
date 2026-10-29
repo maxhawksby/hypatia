@@ -10,7 +10,7 @@ const os = require("os");
 const path = require("path");
 const test = require("node:test");
 const { spawnSync } = require("child_process");
-const { init, isLocalRunner, withWikiScript, pagesUrl } = require("../lib/init");
+const { init, isLocalRunner, withWikiScript, pagesUrl, askLine } = require("../lib/init");
 const templates = require("../lib/templates");
 const { makeRepo, write, git } = require("./helpers");
 
@@ -395,4 +395,17 @@ test("--with adds optional workflows to a private repo too, filled in, and never
   } finally {
     repo.cleanup();
   }
+});
+
+test("the terminal prompt returns what was typed, and null with no terminal", async () => {
+  const { PassThrough } = require("stream");
+  const typed = (line) => {
+    const input = new PassThrough();
+    input.isTTY = true;
+    setImmediate(() => input.write(line));
+    return askLine("Go ahead? [y/N] ", input, new PassThrough());
+  };
+  assert.strictEqual(await typed("y\n"), "y");
+  assert.strictEqual(await typed("no\n"), "no");
+  assert.strictEqual(await askLine("Go ahead? ", new PassThrough(), new PassThrough()), null);
 });
