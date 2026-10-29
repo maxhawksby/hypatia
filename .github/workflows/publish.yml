@@ -49,5 +49,23 @@ jobs:
         run: npm test
 
       - name: Publish
+        id: publish
         if: steps.version.outputs.new == 'true'
-        run: npm publish
+        run: npm publish 2>&1 | tee publish.log; exit "${PIPESTATUS[0]}"
+
+      # Puts the reason at the top of the run page, in plain words, so a failure
+      # email leads straight to what to do.
+      - name: Why publishing failed
+        if: failure() && steps.publish.outcome == 'failure'
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if grep -q "E404" publish.log; then
+            why="npm does not trust this workflow yet. On npmjs.com > hypatia > Settings > Trusted Publisher, add GitHub Actions: maxhawksby / hypatia / publish.yml, and tick Allow npm publish. Then rerun this workflow."
+          elif grep -q "previously staged" publish.log; then
+            why="hypatia@$version is staged on npm, waiting for approval. Approve it on npmjs.com > hypatia, or delete the staged copy and rerun this workflow."
+          else
+            why="npm refused hypatia@$version; the Publish step's log says why."
+          fi
+          echo "::error title=Not published::$why"
+          echo "### hypatia@$version was not published" >> "$GITHUB_STEP_SUMMARY"
+          echo "$why" >> "$GITHUB_STEP_SUMMARY"
