@@ -267,6 +267,12 @@ test("hypatia with no command or an unknown one prints the help", () => {
   assert.match(bad.stderr, /hypatia help <command>/);
 });
 
+test("hypatia --version prints the version", () => {
+  const r = spawnSync(process.execPath, [CLI, "--version"], { encoding: "utf8" });
+  assert.strictEqual(r.status, 0);
+  assert.strictEqual(r.stdout.trim(), require("../package.json").version);
+});
+
 test("a mistyped command suggests the closest one", () => {
   const r = spawnSync(process.execPath, [CLI, "chek"], { encoding: "utf8" });
   assert.strictEqual(r.status, 2);

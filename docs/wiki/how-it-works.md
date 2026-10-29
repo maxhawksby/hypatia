@@ -22,7 +22,7 @@ Hypatia is one small command-line program with no dependencies. It reads your RE
 
 `init`, `upgrade`, `check` and `serve` also say, in one line (and in a small note on the local site), when a newer Hypatia is on npm, with the command that updates the copy you ran. They ask npm at most once a day, give up after a second and a half, and stay quiet in CI or with `HYPATIA_NO_UPDATE_CHECK` set; `build`, `mirror` and `ping` never ask.
 
-`hypatia` on its own lists the commands, one line each; `hypatia help <command>` (or `<command> --help`) gives that command's options and details. A mistyped command gets a "did you mean" hint.
+`hypatia` on its own lists the commands, one line each, and `hypatia --version` prints the version; `hypatia help <command>` (or `<command> --help`) gives that command's options and details. A mistyped command gets a "did you mean" hint.
 
 ## The graph
 

@@ -99,7 +99,8 @@ ${Object.entries(COMMANDS)
   .map(([name, line]) => `  ${name.padEnd(9)}${line}`)
   .join("\n")}
 
-Run "hypatia help <command>" for a command's options and details.
+Run "hypatia help <command>" for a command's options and details,
+or "hypatia --version" for the version.
 Docs: https://maxhawksby.github.io/hypatia/`;
 
 const TEAM_NOTE = `The team comes from git history, and from GitHub when it can be read. The
@@ -339,6 +340,10 @@ async function main(argv) {
     }
     console.error(`Unknown command "${rest[0]}".\n\n${HELP}`);
     return 2;
+  }
+  if (command === "--version" || command === "-v" || command === "version") {
+    console.log(require("../lib/init").VERSION);
+    return 0;
   }
   if (!command || help(command) || command === "help") {
     console.log(HELP);
