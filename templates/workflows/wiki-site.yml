@@ -34,7 +34,10 @@ on:
   issue_comment:
     types: [created, edited, deleted]
   pull_request_target:
-    types: [opened, synchronize, reopened, review_requested, ready_for_review, closed]
+    # no "synchronize": a push to a pull request's branch already asks for a
+    # rebuild through wiki-refresh.yml, and two runs at once cancel one
+    # another, which shows the pull request a cancelled check
+    types: [opened, reopened, review_requested, ready_for_review, closed]
   schedule:
     - cron: "17 * * * *"  # hourly safety net; events above cover most changes
   workflow_dispatch:
