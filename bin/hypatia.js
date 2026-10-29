@@ -27,62 +27,113 @@ const { baseRef } = require("../lib/build-graph");
 const { mirrorCommand } = require("../lib/mirror");
 const { pingCommand } = require("../lib/ping");
 
+// One line per command for the overview, in the order people need them.
+const COMMANDS = {
+  init: "Set Hypatia up in this repo",
+  serve: "Open the wiki in your browser, with live reload",
+  check: "Check the pages for problems and personal data",
+  build: "Write the website to a folder",
+  upgrade: "Bring the installed files up to this version",
+  mirror: "Copy the pages into the repo's GitHub Wiki",
+  ping: "Post review requests and questions to Discord",
+};
+
+// The full usage and behaviour of each command, for "hypatia help <command>".
+const DETAILS = {
+  init: `hypatia init [--dry-run] [--yes] [--public | --private] [--runner "<command>"] [--with check,mirror,ping]
+    Sets Hypatia up in this repo: a docs/wiki/ folder with a starter page,
+    the wiki-keeper agent skill, and a way to open the wiki locally. A
+    public repo also gets the GitHub Pages workflow and the website link in
+    its About box, after you say yes. Never overwrites a file; safe to run
+    again. --dry-run only prints the plan.
+    --with adds optional GitHub workflows to any repo: check (the wiki
+    check on pull requests; public repos get it anyway), mirror (the
+    GitHub Wiki tab) and ping (Discord posts).`,
+  serve: `hypatia serve [--port <number>] [--no-open]
+    Builds the wiki for this repo, serves it at http://localhost:4410/,
+    opens your browser and reloads it when README.md, docs/wiki/ or
+    docs/hypatia.yml change. Stop it with Ctrl+C.`,
+  check: `hypatia check [--base <ref>] [--no-drift]
+    Checks the wiki pages (front matter, parents, links, code: paths that
+    match no file) and runs the privacy guard, and says what to fix. Also
+    warns about hub pages README.md does not lead to, and counts TODO(
+    markers. Writes nothing; exits with 1 when a page has a problem.
+    With "drift: true" in docs/hypatia.yml, or with --base, it also fails
+    when code a page's code: covers changed since <ref> (default: the pull
+    request's base branch, else origin's default branch) but the page did
+    not, unless the pull request description (HYPATIA_PR_BODY or PR_BODY)
+    has the line "wiki: no change needed - <reason>". With "coverage: src"
+    it fails when a top-level folder in src/ has no page.`,
+  build: `hypatia build [--out <folder>]
+    Writes the site and its data (graph.json, graph.js) to a folder,
+    _site by default, ready for GitHub Pages or any static server. Pages
+    marked "private: true" are left out. Stops, writing nothing, when the
+    privacy guard finds an email, phone number, ID number or key.`,
+  upgrade: `hypatia upgrade [--dry-run] [--yes] [--no-drift] [--public | --private]
+    Brings the files init installed up to this version: rewrites the
+    wiki-keeper skill and the wiki workflows from this version's templates,
+    keeping the repo's branch and runner, adds the pull request check to a
+    repo with the website, and offers to turn on the drift check. Shows the
+    plan and asks first; a file edited by hand is marked, since its edits
+    would be lost. --dry-run only prints the plan.`,
+  mirror: `hypatia mirror --out <folder> [--repo <owner/name>] [--branch <name>]
+    Writes the published pages into a clone of the repo's GitHub Wiki
+    (<repo>.wiki.git): README.md becomes Home, links point at wiki pages or
+    GitHub, and each page links back to its file. Removes pages that are
+    gone. Stops, writing nothing, when the privacy guard finds something.`,
+  ping: `hypatia ping [--dry-run] [--event <file>]
+    In GitHub Actions: posts to Discord when a pull request asks for review
+    or an issue is labelled "question", @mentioning people whose
+    discord_id is in docs/hypatia.yml. Webhooks come from the
+    DISCORD_REVIEW_WEBHOOK_URL / DISCORD_QUESTIONS_WEBHOOK_URL secrets;
+    with none set it says so and passes. --dry-run prints the post.`,
+};
+
 const HELP = `Hypatia - a graph-style team wiki for any git repo.
 
-Usage, from inside a repo:
-  hypatia init [--dry-run] [--yes] [--public | --private] [--runner "<command>"] [--with check,mirror,ping]
-      Sets Hypatia up in this repo: a docs/wiki/ folder with a starter page,
-      the wiki-keeper agent skill, and a way to open the wiki locally. A
-      public repo also gets the GitHub Pages workflow and the website link in
-      its About box, after you say yes. Never overwrites a file; safe to run
-      again. --dry-run only prints the plan.
-      --with adds optional GitHub workflows to any repo: check (the wiki
-      check on pull requests; public repos get it anyway), mirror (the
-      GitHub Wiki tab) and ping (Discord posts).
-  hypatia upgrade [--dry-run] [--yes] [--no-drift] [--public | --private]
-      Brings the files init installed up to this version: rewrites the
-      wiki-keeper skill and the wiki workflows from this version's templates,
-      keeping the repo's branch and runner, adds the pull request check to a
-      repo with the website, and offers to turn on the drift check. Shows the
-      plan and asks first; a file edited by hand is marked, since its edits
-      would be lost. --dry-run only prints the plan.
-  hypatia serve [--port <number>] [--no-open]
-      Builds the wiki for this repo, serves it at http://localhost:4410/,
-      opens your browser and reloads it when README.md, docs/wiki/ or
-      docs/hypatia.yml change. Stop it with Ctrl+C.
-  hypatia build [--out <folder>]
-      Writes the site and its data (graph.json, graph.js) to a folder,
-      _site by default, ready for GitHub Pages or any static server. Pages
-      marked "private: true" are left out. Stops, writing nothing, when the
-      privacy guard finds an email, phone number, ID number or key.
-  hypatia check [--base <ref>] [--no-drift]
-      Checks the wiki pages (front matter, parents, links, code: paths that
-      match no file) and runs the privacy guard, and says what to fix. Also
-      warns about hub pages README.md does not lead to, and counts TODO(
-      markers. Writes nothing; exits with 1 when a page has a problem.
-      With "drift: true" in docs/hypatia.yml, or with --base, it also fails
-      when code a page's code: covers changed since <ref> (default: the pull
-      request's base branch, else origin's default branch) but the page did
-      not, unless the pull request description (HYPATIA_PR_BODY or PR_BODY)
-      has the line "wiki: no change needed - <reason>". With "coverage: src"
-      it fails when a top-level folder in src/ has no page.
-  hypatia mirror --out <folder> [--repo <owner/name>] [--branch <name>]
-      Writes the published pages into a clone of the repo's GitHub Wiki
-      (<repo>.wiki.git): README.md becomes Home, links point at wiki pages or
-      GitHub, and each page links back to its file. Removes pages that are
-      gone. Stops, writing nothing, when the privacy guard finds something.
-  hypatia ping [--dry-run] [--event <file>]
-      In GitHub Actions: posts to Discord when a pull request asks for review
-      or an issue is labelled "question", @mentioning people whose
-      discord_id is in docs/hypatia.yml. Webhooks come from the
-      DISCORD_REVIEW_WEBHOOK_URL / DISCORD_QUESTIONS_WEBHOOK_URL secrets;
-      with none set it says so and passes. --dry-run prints the post.
+Usage: hypatia <command> [options], from anywhere inside a repo.
 
-The team comes from git history, and from GitHub when it can be read. The
+Commands:
+${Object.entries(COMMANDS)
+  .map(([name, line]) => `  ${name.padEnd(9)}${line}`)
+  .join("\n")}
+
+Run "hypatia help <command>" for a command's options and details.
+Docs: https://maxhawksby.github.io/hypatia/`;
+
+const TEAM_NOTE = `The team comes from git history, and from GitHub when it can be read. The
 optional docs/hypatia.yml sets the title, names, colors and focus lines.
 
 GitHub data (who is working on what, questions, logins) is read when
 GITHUB_TOKEN is set or the GitHub CLI is signed in (gh auth login).`;
+
+// A known command close to a mistyped one ("serv", "chekc"), or null.
+function closest(word) {
+  const distance = (a, b) => {
+    const row = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      let prev = row[0];
+      row[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const next = row[j];
+        row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = next;
+      }
+    }
+    return row[b.length];
+  };
+  let best = null;
+  for (const name of Object.keys(COMMANDS)) {
+    const d = distance(word.toLowerCase(), name);
+    if (d <= 2 && (!best || d < best.d)) best = { name, d };
+  }
+  return best && best.name;
+}
+
+// The details of one command, with the team note where it matters.
+function commandHelp(name) {
+  return ["serve", "build"].includes(name) ? `${DETAILS[name]}\n\n${TEAM_NOTE}` : DETAILS[name];
+}
 
 // The repo's top folder, or the current folder outside git.
 function repoRoot(cwd) {
@@ -268,9 +319,22 @@ function privacyReport(hits, lead) {
 
 async function main(argv) {
   const [command, ...rest] = argv;
-  if (!command || command === "--help" || command === "-h" || command === "help") {
+  const help = (a) => a === "--help" || a === "-h";
+  if (command === "help" && rest[0]) {
+    if (DETAILS[rest[0]]) {
+      console.log(commandHelp(rest[0]));
+      return 0;
+    }
+    console.error(`Unknown command "${rest[0]}".\n\n${HELP}`);
+    return 2;
+  }
+  if (!command || help(command) || command === "help") {
     console.log(HELP);
     return command ? 0 : 2;
+  }
+  if (DETAILS[command] && rest.some(help)) {
+    console.log(commandHelp(command));
+    return 0;
   }
   const root = repoRoot(process.cwd());
   if (command === "init") return init(root, rest);
@@ -280,7 +344,8 @@ async function main(argv) {
   if (command === "check") return check(root, rest);
   if (command === "mirror") return mirrorCommand(root, rest);
   if (command === "ping") return pingCommand(root, rest);
-  console.error(`Unknown command "${command}".\n\n${HELP}`);
+  const guess = closest(command);
+  console.error(`Unknown command "${command}".${guess ? ` Did you mean "hypatia ${guess}"?` : ""}\n\n${HELP}`);
   return 2;
 }
 

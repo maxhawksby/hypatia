@@ -20,6 +20,8 @@ Hypatia is one small command-line program with no dependencies. It reads your RE
 
 `mirror` and `ping` run in optional workflows; see [Installing](installing.md#optional-workflows).
 
+`hypatia` on its own lists the commands, one line each; `hypatia help <command>` (or `<command> --help`) gives that command's options and details. A mistyped command gets a "did you mean" hint.
+
 ## The graph
 
 Every page is a node. README.md is the center, hubs sit around it, and each page sits near its hub. A page's parent and every link it makes become the lines between nodes. Positions are fixed for the same input, so the map does not jump around between builds.

@@ -259,8 +259,28 @@ test("hypatia serve starts on the repo it is run in, names it like the site, and
 test("hypatia with no command or an unknown one prints the help", () => {
   const none = spawnSync(process.execPath, [CLI], { encoding: "utf8" });
   assert.strictEqual(none.status, 2);
-  assert.match(none.stdout, /hypatia serve/);
+  assert.match(none.stdout, /^  serve +Open the wiki/m);
   const bad = spawnSync(process.execPath, [CLI, "nope"], { encoding: "utf8" });
   assert.strictEqual(bad.status, 2);
   assert.match(bad.stderr, /Unknown command "nope"/);
+  assert.doesNotMatch(bad.stderr, /Did you mean/);
+  assert.match(bad.stderr, /hypatia help <command>/);
+});
+
+test("a mistyped command suggests the closest one", () => {
+  const r = spawnSync(process.execPath, [CLI, "chek"], { encoding: "utf8" });
+  assert.strictEqual(r.status, 2);
+  assert.match(r.stderr, /Did you mean "hypatia check"\?/);
+});
+
+test("hypatia help <command> and <command> --help print that command's details", () => {
+  const viaHelp = spawnSync(process.execPath, [CLI, "help", "check"], { encoding: "utf8" });
+  assert.strictEqual(viaHelp.status, 0);
+  assert.match(viaHelp.stdout, /^hypatia check \[--base <ref>\]/);
+  assert.match(viaHelp.stdout, /privacy guard/);
+  const viaFlag = spawnSync(process.execPath, [CLI, "check", "--help"], { encoding: "utf8" });
+  assert.strictEqual(viaFlag.stdout, viaHelp.stdout);
+  const unknown = spawnSync(process.execPath, [CLI, "help", "nope"], { encoding: "utf8" });
+  assert.strictEqual(unknown.status, 2);
+  assert.match(unknown.stderr, /Unknown command "nope"/);
 });
