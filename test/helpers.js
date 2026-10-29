@@ -8,6 +8,11 @@ const { spawnSync } = require("child_process");
 
 const FIXTURE = path.join(__dirname, "fixture");
 
+// Each test repo stands for a repo of its own. In GitHub Actions these name
+// Hypatia's repo and sign in to GitHub, so the commands the tests run would
+// read the wrong repo; every test file loads this file, so they go here.
+for (const name of ["GITHUB_REPOSITORY", "GITHUB_TOKEN", "GH_TOKEN"]) delete process.env[name];
+
 // git with no user or system config, so a teammate's hooks or signing
 // settings never change what the tests see.
 function git(cwd, args, author) {
