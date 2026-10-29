@@ -60,7 +60,7 @@ Everything init writes is committed and shared, so it names Hypatia the way a te
 
 ## Upgrading
 
-Init copies the skill and the workflows into your repo, so a newer Hypatia does not change them by itself. Each file it writes carries a stamp: a comment line with the Hypatia version that wrote it and a short fingerprint of the rest of the file. When the files are older than the Hypatia you run, `hypatia check` (and `hypatia serve`) print one line saying so. The notice never fails the check.
+Init copies the skill and the workflows into your repo, so a newer Hypatia does not change them by itself. Each file it writes carries a stamp: a comment line with the Hypatia version that wrote it and a short fingerprint of the rest of the file. When the files are older than the Hypatia you run, `hypatia check` (and `hypatia serve`) print one line saying so. The notice never fails the check. They also say when a newer Hypatia itself is on npm, with the command to get it.
 
 To update them:
 

@@ -1,7 +1,7 @@
 ---
 title: How it works
 parent: home
-code: [bin/hypatia.js, lib/build-graph.js, lib/serve.js, lib/mirror.js, lib/ping.js, templates/workflows/**, site/**]
+code: [bin/hypatia.js, lib/build-graph.js, lib/serve.js, lib/mirror.js, lib/ping.js, lib/update-check.js, templates/workflows/**, site/**]
 ---
 
 # How it works
@@ -19,6 +19,8 @@ Hypatia is one small command-line program with no dependencies. It reads your RE
 - `hypatia ping` posts a review request or a wiki question to Discord, from a GitHub Actions event. `--dry-run` prints the post instead.
 
 `mirror` and `ping` run in optional workflows; see [Installing](installing.md#optional-workflows).
+
+`init`, `upgrade`, `check` and `serve` also say, in one line (and in a small note on the local site), when a newer Hypatia is on npm, with the command that updates the copy you ran. They ask npm at most once a day, give up after a second and a half, and stay quiet in CI or with `HYPATIA_NO_UPDATE_CHECK` set; `build`, `mirror` and `ping` never ask.
 
 `hypatia` on its own lists the commands, one line each; `hypatia help <command>` (or `<command> --help`) gives that command's options and details. A mistyped command gets a "did you mean" hint.
 

@@ -11,7 +11,7 @@ For coding agents working on Hypatia itself. To install Hypatia in another repo,
 ## Layout
 
 - `bin/hypatia.js` - the CLI: `init`, `serve`, `build`, `check`, `mirror`, `ping`.
-- `lib/` - one file per job: `init.js`, `upgrade.js`, `build-graph.js`, `team.js`, `privacy.js`, `lint.js`, `drift.js`, `mirror.js`, `ping.js`, `serve.js`.
+- `lib/` - one file per job: `init.js`, `upgrade.js`, `build-graph.js`, `team.js`, `privacy.js`, `lint.js`, `drift.js`, `mirror.js`, `ping.js`, `serve.js`, `update-check.js`.
 - `site/` - the wiki web app, plain HTML, CSS and JavaScript, served as is.
 - `skills/`, `templates/workflows/` - the wiki-keeper skill and the workflows (Pages, pull request check, optional Wiki tab mirror and Discord ping), as templates `init` and `upgrade` fill in.
 - `docs/wiki/` - Hypatia's own wiki. Each page's `code:` says which files it explains.

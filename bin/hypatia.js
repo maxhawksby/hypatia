@@ -26,6 +26,7 @@ const drift = require("../lib/drift");
 const { baseRef } = require("../lib/build-graph");
 const { mirrorCommand } = require("../lib/mirror");
 const { pingCommand } = require("../lib/ping");
+const { updateCheck } = require("../lib/update-check");
 
 // One line per command for the overview, in the order people need them.
 const COMMANDS = {
@@ -301,6 +302,17 @@ async function check(root, argv) {
   }
 }
 
+// Runs a command people type by hand, then says when a newer Hypatia is on
+// npm. The check starts first and runs alongside, so it adds no wait unless
+// the registry is slower than the command (and then at most its timeout).
+async function withUpdateNotice(command, run) {
+  const pending = updateCheck(command);
+  const code = await run();
+  const info = await pending;
+  if (info) console.error(info.line);
+  return code;
+}
+
 // What the privacy guard found, masked, and how to clear it.
 function privacyReport(hits, lead) {
   return (
@@ -337,11 +349,11 @@ async function main(argv) {
     return 0;
   }
   const root = repoRoot(process.cwd());
-  if (command === "init") return init(root, rest);
-  if (command === "upgrade") return upgrade(root, rest);
+  if (command === "init") return withUpdateNotice(command, () => init(root, rest));
+  if (command === "upgrade") return withUpdateNotice(command, () => upgrade(root, rest));
   if (command === "serve") return serve(root, rest);
   if (command === "build") return build(root, rest);
-  if (command === "check") return check(root, rest);
+  if (command === "check") return withUpdateNotice(command, () => check(root, rest));
   if (command === "mirror") return mirrorCommand(root, rest);
   if (command === "ping") return pingCommand(root, rest);
   const guess = closest(command);

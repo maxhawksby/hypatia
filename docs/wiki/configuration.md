@@ -33,4 +33,6 @@ coverage: [src]              # every top-level folder in src/ needs a page
 
 An older `docs/team.yml` (a `people:` list in the same shape) still works. It is read when there is no `docs/hypatia.yml`, and it lists the whole team, as if it said `only_listed: true`.
 
+Setting `HYPATIA_NO_UPDATE_CHECK=1` in the environment stops Hypatia asking npm whether a newer version is out (it is already off when `CI` is set). See [how it works](how-it-works.md#the-commands).
+
 This repo's own `docs/hypatia.yml` sets the title and allows the made-up address in the example above.

@@ -31,3 +31,7 @@ Each finding names the page and line with the value masked, and the build stops 
 A page with `private: true` in its front matter, and every page under it, shows on the local site but is left out of the published build, with its links, backlinks, search entry and team data. A link to it from a published page becomes plain text. README.md is the home page and is always published.
 
 The [agent skill](agent-skill.md) adds a firm rule on top: pages describe how the code works, never real records, user names, emails or keys.
+
+## The update check
+
+The one-line "newer Hypatia is out" notice comes from a plain request to the npm registry for Hypatia's latest version number. It sends no repo data, page text or names, and its answer is kept on your computer for a day. `HYPATIA_NO_UPDATE_CHECK=1` turns it off.

@@ -12,6 +12,10 @@ const FIXTURE = path.join(__dirname, "fixture");
 // Hypatia's repo and sign in to GitHub, so the commands the tests run would
 // read the wrong repo; every test file loads this file, so they go here.
 for (const name of ["GITHUB_REPOSITORY", "GITHUB_TOKEN", "GH_TOKEN"]) delete process.env[name];
+// Nor do they ask npm for a newer Hypatia: the update check is off for every
+// command they run (test/update-check.test.js turns it on against a stand-in).
+process.env.HYPATIA_NO_UPDATE_CHECK = "1";
+delete process.env.HYPATIA_REGISTRY;
 
 // git with no user or system config, so a teammate's hooks or signing
 // settings never change what the tests see.
