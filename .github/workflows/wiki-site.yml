@@ -1,3 +1,4 @@
+# Made by Hypatia 0.3.1 (#be25f076). Run "hypatia upgrade" to update it.
 # Builds the wiki site and its data with Hypatia and deploys it to GitHub
 # Pages. Only for public repos: a private repo's wiki opens locally instead
 # (hypatia serve).

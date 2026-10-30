@@ -1,0 +1,33 @@
+# Made by Hypatia 0.3.1 (#062eb91d). Run "hypatia upgrade" to update it.
+# Checks the wiki on every pull request: pages, links, code: paths and the
+# privacy guard. With "drift: true" in docs/hypatia.yml it also fails when the
+# pull request changes code a page covers but not the page, unless the
+# description has the line "wiki: no change needed - <reason>". With
+# "coverage: src" it fails when a folder in src/ has no page.
+# Free: Node on a GitHub runner. No secrets.
+name: Wiki check
+
+on:
+  pull_request:
+    branches: [main]
+    # "edited" runs the check again when someone adds the
+    # "wiki: no change needed - <reason>" line to the description.
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  wiki-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # full history, so the check can see what this pull request changed
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+      - name: Check the wiki
+        env:
+          HYPATIA_PR_BODY: ${{ github.event.pull_request.body }}
+        run: node bin/hypatia.js check
