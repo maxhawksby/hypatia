@@ -2,7 +2,7 @@
 title: The workflows
 parent: how-it-works
 code: [templates/workflows/**, .github/workflows/wiki-*.yml, lib/mirror.js, lib/ping.js, lib/protect.js, lib/hooks.js]
-verified: 1f7ef0ccb8c8
+verified: 8f8ec359d071
 ---
 
 # The workflows

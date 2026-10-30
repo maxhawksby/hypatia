@@ -1,4 +1,4 @@
-# Made by Hypatia 0.3.1 (#b32c8323). Run "hypatia upgrade" to update it.
+# Made by Hypatia 0.4.0 (#b32c8323). Run "hypatia upgrade" to update it.
 # Checks the wiki on every pull request: pages, links, code: paths and the
 # privacy guard. The drift: setting in docs/hypatia.yml covers pages that
 # fell behind the code they explain: "drift: warn" (what new installs get)

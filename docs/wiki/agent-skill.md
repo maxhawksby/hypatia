@@ -2,7 +2,7 @@
 title: The agent skill
 parent: how-it-works
 code: [skills/wiki-keeper/SKILL.md, .claude/skills/wiki-keeper/SKILL.md]
-verified: 6bcf75465afc
+verified: 33b813763c61
 ---
 
 # The agent skill

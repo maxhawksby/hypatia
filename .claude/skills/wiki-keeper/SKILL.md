@@ -3,7 +3,7 @@ name: wiki-keeper
 description: Keep the team wiki (README.md + docs/wiki/) true to the code. Use before every commit that touches code a wiki page covers, when a folder or program is added or removed, before opening a pull request, when starting a task (to claim it on the wiki graph), when someone asks to update or check the wiki, to answer wiki questions, or to ask a teammate for review.
 ---
 
-<!-- Made by Hypatia 0.3.1 (#0591d2a9). Run "hypatia upgrade" to update it. -->
+<!-- Made by Hypatia 0.4.0 (#0591d2a9). Run "hypatia upgrade" to update it. -->
 
 # Wiki keeper
 
