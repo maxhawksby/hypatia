@@ -15,7 +15,9 @@ Hypatia turns a repo's Markdown into a team wiki: one page per part of the code,
 
 ## Understand it
 
-- [How it works](how-it-works.md) - the four commands, the graph, and live reload.
+- [How it works](how-it-works.md) - the commands and the graph they build.
+- [The website](the-website.md) - the map, the pages, the Ask box, and the local site's live reload.
+- [The workflows](workflows.md) - what runs on GitHub: the website, the pull request check, the Wiki tab and Discord.
 - [The team view](team-view.md) - who is on the team and what they are working on.
 - [The privacy guard](privacy-guard.md) - what keeps emails and keys off the website.
 - [The agent skill](agent-skill.md) - how a coding agent keeps the pages true to the code.
