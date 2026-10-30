@@ -246,7 +246,11 @@ mark.hit.cur { background: #ffd666; color: #191919; box-shadow: 0 0 0 2px rgba(2
 .md .props a:hover { text-decoration: underline; }
 .props code { font: 12px var(--mono); color: var(--muted); background: none; padding: 0; }
 .props .off { color: var(--muted); }
-.props .stamp .ring { margin-right: 6px; transform: translateY(1px); }
+.props .stamp { display: flex; align-items: flex-start; } /* wrapped text lines up after the ring on phones */
+.props .stamp .ring { margin: 5px 6px 0 0; }
+.props .stamp .dot { margin-top: 6.5px; transform: none; }
+.props .stamp + .line { padding-left: 16px; } /* the hint sits under the status text, not the ring */
+.props .stamp + .line code { white-space: nowrap; }
 .props .stamp .stamp-t { color: var(--stale); }
 
 /* markdown */

@@ -1421,6 +1421,8 @@
       order.slice().reverse().forEach((n) => {
         const hot = n.id === cur || hover === n || peeked === n || (pf ? pf.has(n.id) : sf ? sf.has(n.id) : lit.has(n.id) && cur !== D.center);
         if (n.depth === 2 && !showPages && !hot) return;
+        // while a filter is on, only the pages it matches keep their labels
+        if ((pf || sf) && !isLit(n.id) && hover !== n && peeked !== n) return;
         const [x, y] = toScreen(n.x, n.y), r = radius(n);
         const on = !dimAll || isLit(n.id) || hover === n || peeked === n;
         const size = n.depth === 0 ? 14 : n.depth === 1 ? 12.5 : 11.5;
