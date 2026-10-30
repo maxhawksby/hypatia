@@ -2,7 +2,7 @@
 title: The agent skill
 parent: how-it-works
 code: [skills/wiki-keeper/SKILL.md, .claude/skills/wiki-keeper/SKILL.md]
-verified: a42e5af877bd
+verified: 6bcf75465afc
 ---
 
 # The agent skill
@@ -16,7 +16,7 @@ Init fills the skill in for your repo: its GitHub name, default branch, wiki fol
 The skill makes the agent the repo's librarian, working with [stamps](writing-pages.md#keeping-pages-in-step-with-the-code): a page's `verified:` line means someone checked it against today's code.
 
 - **Before every commit that touches code a page covers**, not only before a pull request: run `hypatia check --base origin/<default branch>`, which lists each stale or unverified page and the files that changed.
-- **For each listed page**: reread those files, rewrite only the sections the change affects (never the whole page for a small change), then run `hypatia verify <page>`. It verifies only after rereading; if nothing needed to change, rereading and verifying is still right. Pages stay plain English: what the part does, what it uses, how it breaks, a few short paragraphs at most.
+- **For each listed page**: reread those files, rewrite only the sections the change affects (never the whole page for a small change), then run `hypatia verify <page>`. It verifies only after rereading; if nothing needed to change, rereading and verifying is still right. It `git add`s new files before verifying, since untracked files are left out of the stamp, and when a merge conflicts on a `verified:` line it rereads and verifies again rather than picking a side. Pages stay plain English: what the part does, what it uses, how it breaks, a few short paragraphs at most.
 - **New part of the code**: a new page with `code:` paths covering the whole folder, linked from its hub, then verified.
 - **Never delete or merge pages** without asking the human first.
 - **Skip lines are the exception**: `wiki: no change needed for <page.md> - <reason>` skips one page in one pull request, only with an honest reason. Verifying is preferred, and the older line that skips every page is not used.
