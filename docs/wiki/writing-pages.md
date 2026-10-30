@@ -1,7 +1,7 @@
 ---
 title: Writing pages
 parent: start-here
-code: [lib/lint.js, lib/drift.js]
+code: [lib/lint.js, lib/drift.js, lib/globs.js]
 ---
 
 # Writing pages
@@ -23,8 +23,8 @@ A good page explains one part of the code in plain English: what it does for the
 
 - Every page has a title and a parent that exists, and following parents from any page reaches README.md.
 - Every link from a wiki page, and every link into `docs/wiki/`, points at a file that exists. README.md belongs to the project rather than the wiki, so its links to other repo files only warn.
-- Every `code:` path or glob matches at least one file in the repo (tracked or new). Otherwise the page points at nothing, usually because the code moved.
-- It warns, without failing, when a hub page is not reachable by links from README.md, and it counts the `TODO(` markers left in the pages.
+- Every `code:` path or glob matches at least one file in the repo (tracked or new). Otherwise the page points at nothing, usually because the code moved. In a glob, `**` is any number of folders, `*` is anything inside one folder name, and `?` is one character. A plain folder path with no wildcard covers everything inside it, so `src/search` works like `src/search/**`.
+- It warns, without failing, when a hub page is not reachable by links from README.md, and it counts the `TODO(` markers left in the pages. A marker inside code (an inline `code` span or a fenced block) is an example, so it is not counted.
 - It runs the [privacy guard](privacy-guard.md).
 
 ## Keeping pages in step with the code
@@ -42,4 +42,4 @@ Two more checks, both off until [the config](configuration.md) turns them on:
 
 Private pages count for both: their code can drift too.
 
-`hypatia check` and `hypatia build` fail until a broken link is fixed. While you write, `hypatia serve` keeps the site updating through it: the link shows struck out, and a note lists it. See [how it works](how-it-works.md).
+`hypatia check` and `hypatia build` fail until a broken link is fixed. While you write, `hypatia serve` keeps the site updating through it: the link shows struck out, and a note lists it. See [the website](the-website.md#on-your-computer).
