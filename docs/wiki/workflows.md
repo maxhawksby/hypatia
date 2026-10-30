@@ -2,7 +2,7 @@
 title: The workflows
 parent: how-it-works
 code: [templates/workflows/**, .github/workflows/wiki-*.yml, lib/mirror.js, lib/ping.js, lib/protect.js, lib/hooks.js]
-verified: 54d34250e3a2
+verified: 1f7ef0ccb8c8
 ---
 
 # The workflows
@@ -21,7 +21,7 @@ Every repo gets it. `wiki-check.yml` runs `hypatia check` on every pull request,
 
 A failing check only blocks merging once GitHub requires it. `hypatia protect` does that after a yes: when the default branch's protection already requires status checks it adds `wiki-check` to that list, otherwise it adds a ruleset named "Hypatia wiki check", and it changes nothing else. When `gh` is missing or GitHub says no (a private repo on a free plan can't require checks), it prints the steps to do it by hand.
 
-On your own computer, `hypatia hooks install` writes a git pre-push hook that runs `hypatia check --warn --base origin/<default branch>`, so you see what the pull request check would say. It never blocks the push. A pre-push hook that isn't Hypatia's is left alone, and Hypatia prints the lines to add to it.
+On your own computer, `hypatia hooks install` writes a git pre-push hook that runs `hypatia check --warn` against origin's default branch, which it looks up at push time, so you see what the pull request check would say. It never blocks the push. A pre-push hook that isn't Hypatia's is left alone, and Hypatia prints the lines to add to it.
 
 ## The Wiki tab: wiki-mirror
 
