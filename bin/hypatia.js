@@ -3,7 +3,8 @@
 //
 //   hypatia serve [--port <n>] [--no-open]   open this repo's wiki locally, with live reload
 //   hypatia build [--out <folder>]           write the site and its data to a folder (default _site)
-//   hypatia check [--base <ref>] [--no-drift] check the pages and the privacy guard without writing anything
+//   hypatia check [--base <ref>] [--warn] [--no-drift] check the pages and the privacy guard without writing anything
+//   hypatia verify <page.md>... | --all      stamp pages as checked against their code
 //   hypatia mirror --out <folder>            write the pages as a GitHub Wiki (the Wiki tab)
 //   hypatia ping [--dry-run]                 post a review request or question to Discord (in GitHub Actions)
 //   hypatia init [--yes] [--dry-run]         set Hypatia up in this repo
@@ -23,6 +24,7 @@ const { init } = require("../lib/init");
 const { upgrade, upgradeNotice } = require("../lib/upgrade");
 const { lint, repoFiles } = require("../lib/lint");
 const drift = require("../lib/drift");
+const { verifyCommand } = require("../lib/stamp");
 const { baseRef } = require("../lib/build-graph");
 const { mirrorCommand } = require("../lib/mirror");
 const { pingCommand } = require("../lib/ping");
@@ -33,6 +35,7 @@ const COMMANDS = {
   init: "Set Hypatia up in this repo",
   serve: "Open the wiki in your browser, with live reload",
   check: "Check the pages for problems and personal data",
+  verify: "Mark pages as checked against their code",
   build: "Write the website to a folder",
   upgrade: "Bring the installed files up to this version",
   mirror: "Copy the pages into the repo's GitHub Wiki",
@@ -54,17 +57,26 @@ const DETAILS = {
     Builds the wiki for this repo, serves it at http://localhost:4410/,
     opens your browser and reloads it when README.md, docs/wiki/ or
     docs/hypatia.yml change. Stop it with Ctrl+C.`,
-  check: `hypatia check [--base <ref>] [--no-drift]
+  check: `hypatia check [--base <ref>] [--warn] [--no-drift]
     Checks the wiki pages (front matter, parents, links, code: paths that
     match no file) and runs the privacy guard, and says what to fix. Also
     warns about hub pages README.md does not lead to, and counts TODO(
     markers. Writes nothing; exits with 1 when a page has a problem.
-    With "drift: true" in docs/hypatia.yml, or with --base, it also fails
-    when code a page's code: covers changed since <ref> (default: the pull
-    request's base branch, else origin's default branch) but the page did
-    not, unless the pull request description (HYPATIA_PR_BODY or PR_BODY)
-    has the line "wiki: no change needed - <reason>". With "coverage: src"
-    it fails when a top-level folder in src/ has no page.`,
+    With "drift: warn" or "drift: error" in docs/hypatia.yml it also lists
+    pages whose code changed since their verified: stamp, or that have
+    none; error (or --base, when the config sets nothing) makes them fail
+    the check, --warn only lists them. --base <ref> (default: the pull
+    request's base branch) adds what changed in each page's files since
+    <ref>. A pull request description (HYPATIA_PR_BODY or PR_BODY) can
+    skip one page with "wiki: no change needed for <page.md> - <reason>".
+    With "coverage: src" it fails when a top-level folder in src/ has no
+    page. --no-drift skips the stamp check.`,
+  verify: `hypatia verify <page.md>... | --all
+    Stamps each page as checked against the code its code: covers: writes
+    "verified: <stamp>" in its front matter and changes nothing else. Run
+    it after rereading the page against that code and updating it, so
+    hypatia check knows the page is current. --all stamps every page with
+    code:. A page without code: is skipped.`,
   build: `hypatia build [--out <folder>]
     Writes the site and its data (graph.json, graph.js) to a folder,
     _site by default, ready for GitHub Pages or any static server. Pages
@@ -205,29 +217,37 @@ async function build(root, argv) {
 }
 
 function parseCheckArgs(argv) {
-  const opts = { base: null, noDrift: false };
+  const opts = { base: null, noDrift: false, warn: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--base" || a.startsWith("--base=")) {
       opts.base = a.includes("=") ? a.slice(a.indexOf("=") + 1) : argv[++i];
       if (!opts.base) throw new Error("--base needs a branch or commit, e.g. --base origin/main.");
     } else if (a === "--no-drift") opts.noDrift = true;
+    else if (a === "--warn") opts.warn = true;
     else if (a === "--help" || a === "-h") opts.help = true;
-    else throw new Error(`Unknown option "${a}". Try --base <ref> or --no-drift.`);
+    else throw new Error(`Unknown option "${a}". Try --base <ref>, --warn or --no-drift.`);
   }
   return opts;
 }
 
-// The ref the drift check compares with, and whether it was asked for
-// (--base) or worked out (config "drift: true"): { base, asked } or null.
-function driftBase(root, opts, config, env = process.env) {
-  if (opts.noDrift) return null;
-  if (opts.base) return { base: opts.base, asked: true };
-  if (!config.drift) return null;
-  // on a pull request GitHub Actions names the branch it goes into
-  if (env.GITHUB_BASE_REF) return { base: `origin/${env.GITHUB_BASE_REF}`, asked: true };
+// How the drift check runs: { mode, base, baseAsked }. The mode comes from
+// the config ("off", "warn", "error"); --warn makes it warn, --base turns it
+// on (as error) when the config leaves it off, and --no-drift turns it off.
+// The base only adds what changed to each stale page: --base, else the pull
+// request's base in GitHub Actions, else origin's default branch when it
+// exists.
+function driftOptions(root, opts, config, env = process.env) {
+  if (opts.noDrift) return { mode: "off", base: null, baseAsked: false };
+  let mode = config.drift;
+  if (opts.warn) mode = "warn";
+  else if (opts.base && mode === "off") mode = "error";
+  if (mode === "off") return { mode, base: null, baseAsked: false };
+  if (opts.base) return { mode, base: opts.base, baseAsked: true };
+  if (env.GITHUB_BASE_REF) return { mode, base: `origin/${env.GITHUB_BASE_REF}`, baseAsked: false };
   const ref = baseRef(root);
-  return spawnSync("git", ["rev-parse", "--verify", "--quiet", ref], { cwd: root, windowsHide: true }).status === 0 ? { base: ref, asked: false } : null;
+  const found = spawnSync("git", ["rev-parse", "--verify", "--quiet", ref], { cwd: root, windowsHide: true }).status === 0;
+  return { mode, base: found ? ref.replace(/^refs\/remotes\//, "") : null, baseAsked: false };
 }
 
 // `hypatia check`: the same checks as a build, nothing written, no GitHub.
@@ -240,7 +260,7 @@ async function check(root, argv) {
     return 2;
   }
   if (opts.help) {
-    console.log("hypatia check [--base <ref>] [--no-drift]");
+    console.log("hypatia check [--base <ref>] [--warn] [--no-drift]");
     return 0;
   }
   if (!installed(root)) {
@@ -260,22 +280,15 @@ async function check(root, argv) {
     const found = lint(root, graph);
     const config = loadConfig(root);
     const codePages = drift.codePages(root, graph, excluded.map((e) => e.path));
-    const compare = driftBase(root, opts, config);
-    let driftNote = "";
-    if (compare) {
-      let changed = null;
-      try {
-        changed = drift.changedFiles(root, compare.base);
-      } catch (err) {
-        if (compare.asked) {
-          found.errors.push(`could not compare this branch with '${compare.base}' (${err.message}). Run 'git fetch origin' (in GitHub Actions, check out with fetch-depth: 0), or pass --base <branch>.`);
-        }
-      }
-      if (changed) {
-        found.errors.push(...drift.driftProblems(codePages, changed, process.env.HYPATIA_PR_BODY || process.env.PR_BODY || ""));
-        driftNote = ` Pages kept up with the code changed since ${compare.base}.`;
-      }
-    }
+    const driftRun = drift.driftCheck(root, codePages, {
+      ...driftOptions(root, opts, config),
+      prBody: process.env.HYPATIA_PR_BODY || process.env.PR_BODY || "",
+      defaultBranch: baseRef(root).replace(/^refs\/remotes\//, ""),
+    });
+    found.errors.push(...driftRun.errors);
+    found.warnings.push(...driftRun.warnings);
+    for (const n of driftRun.notes) console.error(`hypatia: ${n}`);
+    const driftNote = driftRun.summary;
     if (config.coverage.length) {
       const files = repoFiles(root);
       if (files) found.errors.push(...drift.coverageProblems(codePages, config.coverage, files));
@@ -359,6 +372,7 @@ async function main(argv) {
   if (command === "serve") return serve(root, rest);
   if (command === "build") return build(root, rest);
   if (command === "check") return withUpdateNotice(command, () => check(root, rest));
+  if (command === "verify") return verifyCommand(root, rest);
   if (command === "mirror") return mirrorCommand(root, rest);
   if (command === "ping") return pingCommand(root, rest);
   const guess = closest(command);

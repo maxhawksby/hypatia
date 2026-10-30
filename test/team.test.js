@@ -309,3 +309,18 @@ test("an older team file still lists exactly that team, matched to git by name a
       ["ben", "Ben Carter", "#5aa9ff"],
     ]);
   }));
+
+test("config drift: off, warn or error; true/yes mean error, false/no or nothing mean off, a typo warns", () => {
+  const mode = (text) => team.parseConfig(text).drift;
+  assert.strictEqual(mode(""), "off");
+  assert.strictEqual(mode("drift: warn\n"), "warn");
+  assert.strictEqual(mode("drift: error\n"), "error");
+  assert.strictEqual(mode("drift: OFF\n"), "off");
+  for (const v of ["true", "yes", "on"]) assert.strictEqual(mode(`drift: ${v}\n`), "error", v);
+  for (const v of ["false", "no"]) assert.strictEqual(mode(`drift: ${v}\n`), "off", v);
+  assert.strictEqual(mode("drift:\n"), "off");
+  const warnings = [];
+  assert.strictEqual(team.parseConfig("drift: eror\n", { warn: (m) => warnings.push(m) }).drift, "off");
+  assert.match(warnings[0], /drift: "eror" is not a drift setting; use off, warn or error/);
+  assert.strictEqual(team.loadConfig(path.join(require("os").tmpdir(), "hypatia-no-such-folder")).drift, "off");
+});

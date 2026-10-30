@@ -95,7 +95,7 @@ test("an old install moves to this version: skill stamped, pins moved, the pull 
     }
     assert.match(read(repo.root, REFRESH), /branches-ignore: \[master\]/);
     assert.ok(!exists(repo.root, MIRROR) && !exists(repo.root, PING), "mirror and ping are never added");
-    assert.strictEqual(loadConfig(repo.root).drift, true);
+    assert.strictEqual(loadConfig(repo.root).drift, "error");
     assert.strictEqual(upgradeNotice(repo.root), null, "no notice once upgraded");
 
     // a second run finds everything current
@@ -174,7 +174,7 @@ test("the drift switch edits one line of an existing config, and an explicit no 
     assert.match(r.out, /~ docs\/hypatia\.yml\s+adds "drift: true"/);
     assert.strictEqual(read(repo.root, "docs/hypatia.yml"), `${config}\ndrift: true\n`, "every other line is kept as it was");
     const loaded = loadConfig(repo.root);
-    assert.strictEqual(loaded.drift, true);
+    assert.strictEqual(loaded.drift, "error");
     assert.strictEqual(loaded.people[0].focus, "Search");
 
     write(repo.root, "docs/hypatia.yml", "title: Acme Notes\ndrift: off\n");
