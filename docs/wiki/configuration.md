@@ -35,4 +35,4 @@ An older `docs/team.yml` (a `people:` list in the same shape) still works. It is
 
 Setting `HYPATIA_NO_UPDATE_CHECK=1` in the environment stops Hypatia asking npm whether a newer version is out (it is already off when `CI` is set). See [how it works](how-it-works.md#the-commands).
 
-This repo's own `docs/hypatia.yml` sets the title and allows the made-up address in the example above.
+This repo's own `docs/hypatia.yml` sets the title, allows the made-up address in the example above and Max's public address, lists Max with his focus, and turns on `drift: true`, so every pull request here keeps its pages in step. It sets no `coverage:`: that check looks only at folders inside the folders it names, and Hypatia's code sits in flat folders (`lib/` holds files, not subfolders), so it would have nothing to check.
