@@ -2,7 +2,7 @@
 title: The agent skill
 parent: how-it-works
 code: [skills/wiki-keeper/SKILL.md, .claude/skills/wiki-keeper/SKILL.md]
-verified: 944d1181eb81
+verified: a42e5af877bd
 ---
 
 # The agent skill
@@ -21,13 +21,14 @@ The skill makes the agent the repo's librarian, working with [stamps](writing-pa
 - **Never delete or merge pages** without asking the human first.
 - **Skip lines are the exception**: `wiki: no change needed for <page.md> - <reason>` skips one page in one pull request, only with an honest reason. Verifying is preferred, and the older line that skips every page is not used.
 - **Never invent facts**: write `TODO(owner): <question>` instead of guessing.
-- **Finish**: rerun the check on its own work until it passes.
+- **Finish**: rerun the check on its own work until it passes. `hypatia check --warn` is there for a quick look, but the pass that counts is the one without it.
+- **Pre-push hook**: it may suggest `hypatia hooks install` to the human (warnings before each push, never blocking), but never installs it unasked.
 - **When starting a task**: label the GitHub issue `wiki:<slug>` and assign itself, so [the team view](team-view.md) shows the work. If `gh` is not signed in, it gives the human the commands instead.
 - **Questions**: answer "Ask the team" questions as comments on their issues, linking the page and the code, and add the answer to the page when others will ask it too. If it does not know, it says what it checked and leaves the question open.
 - **Commits**: one short sentence that says what changed, starting with the part it touches, because the wiki shows them next to each person's branch.
 - **Asking for review**: open the pull request with What, Why, Before and After, How to test, and a Wiki section listing each page it updated and why, one line each. Then request a teammate. With the [wiki-ping workflow](workflows.md), the request also goes to the team's Discord.
 - **Privacy**: never put real records, user names, emails or keys on a page, not even as examples, and never silence the guard by adding a real value to `allow:`. See [the privacy guard](privacy-guard.md).
-- **Old setup**: when the check says the repo's Hypatia files are from an older version, show the human the `hypatia upgrade --dry-run` plan, and only with their okay run the upgrade in the same pull request. They decide on the drift setting and on replacing files edited by hand.
+- **Old setup**: when the check says the repo's Hypatia files are from an older version, show the human the `hypatia upgrade --dry-run` plan, and only with their okay run the upgrade in the same pull request. They decide on the drift setting (`--no-drift` keeps upgrade from adding `drift: warn`) and on replacing files edited by hand.
 
 The installed skill carries a version stamp after its front matter, so Hypatia can tell when it is out of date. See [Upgrading](installing.md#upgrading).
 

@@ -2,6 +2,7 @@
 title: The team view
 parent: how-it-works
 code: [lib/team.js, lib/github.js]
+verified: 2cf1952b506b
 ---
 
 # The team view

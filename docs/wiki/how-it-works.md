@@ -2,6 +2,7 @@
 title: How it works
 parent: home
 code: [bin/hypatia.js, lib/build-graph.js, lib/text.js, lib/update-check.js]
+verified: a3d1fdf2bfa3
 ---
 
 # How it works
@@ -14,7 +15,9 @@ Hypatia is one small command-line program with no dependencies. It reads your RE
 - `hypatia upgrade` brings the skill and workflows init copied in up to the running version. `check` and `serve` print one line when they are older. See [Upgrading](installing.md#upgrading).
 - `hypatia serve` builds the wiki in memory and opens it at `http://localhost:4410/`. It watches README.md, `docs/wiki/` and `docs/hypatia.yml`, and the open page reloads by itself when one changes. Nothing is written into the repo. `--port` picks another port, `--no-open` skips the browser. See [the website](the-website.md).
 - `hypatia build --out <folder>` writes the site and its data (`graph.json`, `graph.js`) to a folder, `_site` by default, ready for GitHub Pages or any static server. Pages marked private are left out.
-- `hypatia check` runs every check a build would, writes nothing, and says what to fix. `--base <ref>` also checks that pages kept up with the code changed since that branch. See [Writing pages](writing-pages.md). In a repo without Hypatia it says so and prints the one-line prompt to paste into a coding agent to install it.
+- `hypatia check` runs every check a build would, writes nothing, and says what to fix. With `drift: warn` or `drift: error` it also lists pages whose code changed since they were verified; `--base <ref>` adds what changed since that branch, `--warn` only lists, `--no-drift` skips it. See [Writing pages](writing-pages.md#keeping-pages-in-step-with-the-code). In a repo without Hypatia it says so and prints the one-line prompt to paste into a coding agent to install it.
+- `hypatia verify <page.md>...` (or `--all`) stamps pages as reread against their code: it writes `verified:` in the front matter and nothing else.
+- `hypatia protect` makes the wiki-check job a required check on the default branch, after a yes, through `gh`. `hypatia hooks install` adds a git pre-push hook that shows the check as warnings and never blocks the push; `hooks remove` takes it out. See [the workflows](workflows.md).
 - `hypatia mirror --out <folder>` writes the published pages into a clone of the repo's GitHub Wiki, so the Wiki tab shows them too.
 - `hypatia ping` posts a review request or a wiki question to Discord, from a GitHub Actions event. `--dry-run` prints the post instead.
 
@@ -28,7 +31,7 @@ Hypatia is one small command-line program with no dependencies. It reads your RE
 
 Every page is a node. README.md is the center, hubs sit around it, and each page sits near its hub. A page's parent and every link it makes become the lines between nodes. Positions are fixed for the same input, so the map does not jump around between builds.
 
-On top of the pages, the graph holds data from git and GitHub: each page's last change, recent commits, active branches, and open issues and pull requests. That data is how [the team view](team-view.md) knows who is working on what.
+On top of the pages, the graph holds data from git and GitHub: each page's last change, recent commits, active branches, and open issues and pull requests. Each page also carries its stamp state (current, stale, unverified, or none without `code:`), which the map shows as rings. That data is how [the team view](team-view.md) knows who is working on what.
 
 Pages are read the same way on every computer: Windows line endings and the byte order mark some editors add are fine.
 
