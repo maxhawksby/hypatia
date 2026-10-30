@@ -304,7 +304,7 @@ async function check(root, argv) {
     const driftRun = drift.driftCheck(root, codePages, {
       ...driftOptions(root, opts, config),
       prBody: process.env.HYPATIA_PR_BODY || process.env.PR_BODY || "",
-      defaultBranch: baseRef(root).replace(/^refs\/remotes\//, ""),
+      defaultBranch: drift.suggestedBase(root),
     });
     found.errors.push(...driftRun.errors);
     found.warnings.push(...driftRun.warnings);
