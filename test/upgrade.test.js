@@ -79,7 +79,7 @@ test("an old install moves to this version: skill stamped, pins moved, the pull 
     assert.match(r.out, new RegExp(`~ ${esc(SKILL)}\\s+updates the agent skill, from an older version to ${esc(VERSION)}; .*any edits made here will be lost`));
     assert.match(r.out, new RegExp(`~ ${esc(SITE)}\\s+updates the workflow, from 0\\.2\\.1 to ${esc(VERSION)}`));
     assert.match(r.out, new RegExp(`\\+ ${esc(CHECK)}\\s+checks the wiki on every pull request`));
-    assert.match(r.out, /\+ docs\/hypatia\.yml\s+new config that turns on the drift check/);
+    assert.match(r.out, /\+ docs\/hypatia\.yml\s+new config with "drift: warn": the check lists pages that fell behind their code but still passes/);
 
     const skill = read(repo.root, SKILL);
     assert.deepStrictEqual(templates.readStamp(skill), { version: VERSION, edited: false });
@@ -95,7 +95,8 @@ test("an old install moves to this version: skill stamped, pins moved, the pull 
     }
     assert.match(read(repo.root, REFRESH), /branches-ignore: \[master\]/);
     assert.ok(!exists(repo.root, MIRROR) && !exists(repo.root, PING), "mirror and ping are never added");
-    assert.strictEqual(loadConfig(repo.root).drift, true);
+    assert.match(read(repo.root, "docs/hypatia.yml"), /^drift: warn\b/m, "new installs and upgrades start at warn");
+    assert.ok(["warn", false].includes(loadConfig(repo.root).drift), "the config reads (warn once the setting takes words)");
     assert.strictEqual(upgradeNotice(repo.root), null, "no notice once upgraded");
 
     // a second run finds everything current
@@ -105,7 +106,7 @@ test("an old install moves to this version: skill stamped, pins moved, the pull 
     assert.deepStrictEqual(again.asked, [], "nothing to do, so nothing to ask");
     assert.deepStrictEqual(snapshot(repo.root), before);
     for (const rel of [SKILL, SITE, REFRESH, CHECK]) assert.match(again.out, new RegExp(`= ${esc(rel)}\\s+already current`), rel);
-    assert.match(again.out, /= docs\/hypatia\.yml\s+the drift check is already on/);
+    assert.match(again.out, /= docs\/hypatia\.yml\s+"drift: warn" is set; left as is/);
     assert.match(again.out, /Everything is already current/);
   } finally {
     repo.cleanup();
@@ -124,7 +125,7 @@ test("a custom runner is kept in every workflow and the skill, and goes into the
     assert.match(read(repo.root, CHECK), new RegExp(`run: ${esc(runner)} check`));
     assert.match(read(repo.root, SKILL), new RegExp(`\`${esc(runner)} serve\``));
     assert.doesNotMatch(read(repo.root, SITE), /npx hypatia@/);
-    assert.match(r.out, /! docs\/hypatia\.yml\s+the drift check stays off \(--no-drift\)/);
+    assert.match(r.out, /! docs\/hypatia\.yml\s+the drift setting stays off \(--no-drift\)/);
   } finally {
     repo.cleanup();
   }
@@ -163,7 +164,7 @@ test("a dry run, a no, and no terminal all leave every file as it was", async ()
   }
 });
 
-test("the drift switch edits one line of an existing config, and an explicit no is respected", async () => {
+test("the drift switch adds one line to an existing config, and any drift: already set is kept", async () => {
   const repo = makeRepo({ generic: true });
   try {
     oldInstall(repo.root, { website: false });
@@ -171,18 +172,28 @@ test("the drift switch edits one line of an existing config, and an explicit no 
     write(repo.root, "docs/hypatia.yml", config);
     const r = await run(repo.root, ["--yes"]);
     assert.strictEqual(r.code, 0, r.out);
-    assert.match(r.out, /~ docs\/hypatia\.yml\s+adds "drift: true"/);
-    assert.strictEqual(read(repo.root, "docs/hypatia.yml"), `${config}\ndrift: true\n`, "every other line is kept as it was");
+    assert.match(r.out, /~ docs\/hypatia\.yml\s+adds "drift: warn"/);
+    assert.strictEqual(read(repo.root, "docs/hypatia.yml"), `${config}\ndrift: warn\n`, "every other line is kept as it was");
     const loaded = loadConfig(repo.root);
-    assert.strictEqual(loaded.drift, true);
     assert.strictEqual(loaded.people[0].focus, "Search");
+
+    // an explicit setting, old or new style, is never changed
+    for (const line of ["drift: true", "drift: error", "drift: warn   # for now", "drift: no"]) {
+      write(repo.root, "docs/hypatia.yml", `title: Acme Notes\n${line}\n`);
+      const kept = await run(repo.root, ["--yes"]);
+      assert.match(kept.out, new RegExp(`= docs/hypatia\\.yml\\s+"${esc(line.replace(/\s*#.*/, ""))}" is set; left as is`), line);
+      assert.strictEqual(read(repo.root, "docs/hypatia.yml"), `title: Acme Notes\n${line}\n`, line);
+    }
 
     write(repo.root, "docs/hypatia.yml", "title: Acme Notes\ndrift: off\n");
     const off = await run(repo.root, ["--yes"]);
     assert.match(off.out, /= docs\/hypatia\.yml\s+"drift: off" is set; left as is/);
     assert.strictEqual(read(repo.root, "docs/hypatia.yml"), "title: Acme Notes\ndrift: off\n");
 
-    assert.strictEqual(withDrift("title: A\ndrift:\n"), "title: A\ndrift: true\n", "an empty drift: line is filled in, not repeated");
+    assert.strictEqual(withDrift("title: A\ndrift:\n"), "title: A\ndrift: warn\n", "an empty drift: line is filled in, not repeated");
+    write(repo.root, "docs/hypatia.yml", "title: A\ndrift:   # to decide\n");
+    const empty = await run(repo.root, ["--yes"]);
+    assert.match(empty.out, /~ docs\/hypatia\.yml\s+adds "drift: warn"/, "an empty drift: line counts as missing");
   } finally {
     repo.cleanup();
   }
@@ -195,26 +206,27 @@ test("the older docs/team.yml gets the switch when that is the repo's config", a
     const before = read(repo.root, "docs/team.yml");
     const r = await run(repo.root, ["--yes"]);
     assert.strictEqual(r.code, 0, r.out);
-    assert.strictEqual(read(repo.root, "docs/team.yml"), `${before}${before.endsWith("\n") ? "" : "\n"}drift: true\n`);
+    assert.strictEqual(read(repo.root, "docs/team.yml"), `${before}${before.endsWith("\n") ? "" : "\n"}drift: warn\n`);
     assert.ok(!exists(repo.root, "docs/hypatia.yml"), "no second config file");
   } finally {
     repo.cleanup();
   }
 });
 
-test("a repo without the website gets no workflows, and --private keeps the check out of one that has it", async () => {
+test("a repo without the website gets the pull request check and no website workflows", async () => {
   const repo = makeRepo({ generic: true });
   try {
     oldInstall(repo.root, { website: false });
     const r = await run(repo.root, ["--yes"]);
     assert.strictEqual(r.code, 0, r.out);
     assert.match(r.out, /no public website/);
-    assert.ok(!exists(repo.root, ".github"), "nothing added under .github");
+    assert.match(r.out, new RegExp(`\\+ ${esc(CHECK)}\\s+checks the wiki on every pull request \\(new installs get it in every repo\\)`));
+    assert.match(read(repo.root, CHECK), new RegExp(`run: npx hypatia@${esc(VERSION)} check`));
+    assert.deepStrictEqual(fs.readdirSync(path.join(repo.root, ".github/workflows")), ["wiki-check.yml"], "no website workflows");
 
     oldInstall(repo.root);
     const p = await run(repo.root, ["--yes", "--private"]);
     assert.strictEqual(p.code, 0, p.out);
-    assert.ok(!exists(repo.root, CHECK));
     assert.match(read(repo.root, SITE), new RegExp(`npx hypatia@${esc(VERSION)}`), "workflows already there are still refreshed");
   } finally {
     repo.cleanup();
@@ -232,13 +244,13 @@ test("mirror and ping are refreshed when present, and a hand edit is named befor
     const r = await run(repo.root, ["--dry-run"]);
     assert.match(r.out, new RegExp(`~ ${esc(MIRROR)}\\s+updates the workflow, from 0\\.2\\.9 to`));
     assert.match(r.out, new RegExp(`~ ${esc(PING)}\\s+updates the workflow, from ${esc(VERSION)} to ${esc(VERSION)}; it was edited by hand since Hypatia ${esc(VERSION)} wrote it, and those edits will be lost`));
-    assert.ok(!exists(repo.root, CHECK), "a repo without the website gets no check");
+    assert.match(r.out, new RegExp(`\\+ ${esc(CHECK)}`), "every repo gets the check");
   } finally {
     repo.cleanup();
   }
 });
 
-test("files this version's init wrote are current: upgrade only offers the drift switch", async () => {
+test("files this version's init wrote are current, drift: warn included: nothing to do", async () => {
   const repo = makeRepo({ generic: true });
   try {
     const gh = () => ({ ok: true, out: JSON.stringify({ visibility: "PUBLIC", defaultBranchRef: { name: "master" } }), err: "" });
@@ -247,8 +259,8 @@ test("files this version's init wrote are current: upgrade only offers the drift
     assert.strictEqual(upgradeNotice(repo.root), null);
     const r = await run(repo.root, ["--dry-run"]);
     for (const rel of [SKILL, SITE, REFRESH, CHECK, MIRROR]) assert.match(r.out, new RegExp(`= ${esc(rel)}\\s+already current`), rel);
-    assert.match(r.out, /\+ docs\/hypatia\.yml/);
-    assert.match(r.out, /to do the 1 \+ and ~ step\./);
+    assert.match(r.out, /= docs\/hypatia\.yml\s+"drift: warn" is set; left as is/);
+    assert.match(r.out, /Everything is already current/);
   } finally {
     repo.cleanup();
   }
