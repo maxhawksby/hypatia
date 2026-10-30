@@ -46,9 +46,9 @@ test("install writes a marked pre-push hook that runs check --warn against origi
     const text = fs.readFileSync(hookAt(repo.root), "utf8");
     assert.match(text, /^#!\/bin\/sh\n/);
     assert.ok(text.includes(MARKER));
-    assert.match(text, /hypatia check --warn --base "\$base"/);
+    assert.match(text, /hypatia check --warn \$\{base:\+--base "\$base"\}/);
     assert.match(text, /npx --yes hypatia check --warn/, "falls back to npx when hypatia is not on the PATH");
-    assert.match(text, /\|\| echo origin\/main\)/);
+    assert.match(text, /for b in origin\/main origin\/master/, "the branch is found at push time");
     assert.match(text, /\nexit 0\n$/);
     if (posix) assert.ok(fs.statSync(hookAt(repo.root)).mode & 0o111, "executable");
 
@@ -75,7 +75,7 @@ test("a pre-push hook that is not Hypatia's is never overwritten or removed, and
     const r = await run(repo.root, ["install"]);
     assert.strictEqual(r.code, 1);
     assert.match(r.out, /already a pre-push hook at \.git\/hooks\/pre-push, and it is not Hypatia's, so it was left as is/);
-    assert.match(r.out, /add these lines to it[\s\S]*hypatia check --warn --base "\$base" \|\| true/);
+    assert.match(r.out, /add these lines to it[\s\S]*hypatia check --warn \$\{base:\+--base "\$base"\} \|\| true/);
     const rm = await run(repo.root, ["remove"]);
     assert.strictEqual(rm.code, 1);
     assert.match(rm.out, /not Hypatia's, so it was left as is/);
@@ -120,6 +120,37 @@ test("a real git push goes ahead even when the check fails, and shows its output
     assert.strictEqual(push.status, 0, push.stderr);
     assert.match(push.stderr, /stand-in check ran with: check --warn --base origin\/main/);
     assert.strictEqual(git(repo.root, ["rev-parse", "HEAD"]), git(repo.root, ["rev-parse", "origin/main"]), "the push went through");
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("a hostile branch name is never pasted into the hook and never runs as a command", { skip: !posix }, async () => {
+  const repo = repoWithOrigin();
+  try {
+    const hostile = "x$(touch${IFS}pwned)`touch${IFS}pwned2`;touch${IFS}pwned3";
+    git(repo.root, ["check-ref-format", "--branch", hostile]);
+    // the branch is checked out when the hook is installed, and is origin's default at push time
+    git(repo.root, ["switch", "-q", "-c", hostile]);
+    git(repo.root, ["push", "-q", "origin", hostile]);
+    git(repo.root, ["symbolic-ref", "refs/remotes/origin/HEAD", `refs/remotes/origin/${hostile}`]);
+    const r = await run(repo.root, ["install"]);
+    assert.strictEqual(r.code, 0, r.out);
+    assert.ok(!fs.readFileSync(hookAt(repo.root), "utf8").includes("pwned"), "no branch name in the hook");
+
+    const bin = path.join(repo.tmp, "bin");
+    fs.mkdirSync(bin);
+    fs.writeFileSync(path.join(bin, "hypatia"), '#!/bin/sh\nfor a in "$@"; do echo "arg=[$a]" >&2; done\nexit 1\n', { mode: 0o755 });
+    write(repo.root, "notes.md", "more\n");
+    commit(repo.root, BEN, "More");
+    const env = { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}`, GIT_CONFIG_GLOBAL: os.devNull, GIT_CONFIG_NOSYSTEM: "1" };
+    const push = spawnSync("git", ["push", "origin", hostile], { cwd: repo.root, env, encoding: "utf8" });
+    assert.strictEqual(push.status, 0, push.stderr);
+    assert.ok(push.stderr.includes(`arg=[origin/${hostile}]`), push.stderr);
+    for (const name of ["pwned", "pwned2", "pwned3"]) {
+      assert.ok(!fs.existsSync(path.join(repo.root, name)), `${name} was not created`);
+      assert.ok(!fs.existsSync(path.join(repo.tmp, name)), `${name} was not created`);
+    }
   } finally {
     repo.cleanup();
   }
