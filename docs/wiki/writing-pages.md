@@ -2,7 +2,7 @@
 title: Writing pages
 parent: start-here
 code: [lib/lint.js, lib/drift.js, lib/globs.js]
-verified: a9229f27f0a4
+verified: 4cf738384c0e
 ---
 
 # Writing pages
@@ -31,19 +31,19 @@ A good page explains one part of the code in plain English: what it does for the
 
 ## Keeping pages in step with the code
 
-A page with `code:` can carry a stamp, `verified: <12 characters>`: a fingerprint of every file its `code:` matches (paths and contents; files git ignores don't count, and Windows line endings give the same stamp). Run `hypatia verify <page.md>` after rereading the page against that code, and fixing it if needed; it writes the stamp and changes nothing else. `hypatia verify --all` stamps every page with `code:`. The stamp means "someone checked this page against this exact code".
+A page with `code:` can carry a stamp, `verified: <12 characters>`: a fingerprint of every file git tracks that its `code:` matches (paths and contents; Windows line endings give the same stamp, and a submodule counts as the commit it records). Files git does not track yet never count, so `git add` a new file before verifying; `verify` names any it left out. The wiki's own pages, README.md and the config never count either, so a page can't go stale by being edited. Run `hypatia verify <page.md>` after rereading the page against that code, and fixing it if needed; it writes the stamp and changes nothing else. `hypatia verify --all` stamps every page with `code:`. The stamp means "someone checked this page against this exact code".
 
 When the code changes, the stamp stops matching and the page is **stale**. A page with `code:` and no stamp is **unverified**, which counts as stale. Two checks in [the config](configuration.md) use this:
 
-- `drift: warn` (what new installs get) lists stale pages and still passes; `drift: error` fails the check until each one is reread and verified; `drift: off`, or no `drift:` line, skips it. `true` means error and `false` means off. `hypatia check --warn` lists them without failing for one run, `--no-drift` skips them, and `--base <ref>` turns the check on as error when the config leaves it off.
-- With a base to compare against, each stale page also lists the files that changed and roughly where. In GitHub Actions that is the branch the pull request goes into; on your computer, origin's default branch, uncommitted work included; `--base <ref>` names any branch or commit. Without one, the stale page is still listed, just without the details.
+- `drift: warn` (what new installs get) lists stale pages and still passes; `drift: error` fails the check until each one is reread and verified; `drift: off`, or no `drift:` line, skips it. The older `true` (or `yes`, `on`) now means warn, with a notice to switch to `drift: error`; `false` means off. `hypatia check --warn` lists them without failing for one run, `--no-drift` skips them, and `--base <ref>` turns the check on as error when the config leaves it off.
+- With a base to compare against, each stale page also lists the files that changed and roughly where, and `drift: error` fails only the stale pages this branch touched (the page or the code it covers). Other stale pages show as warnings, so one pull request never answers for another's drift. Without a base, every stale page fails. In GitHub Actions that is the branch the pull request goes into; on your computer, origin's default branch, uncommitted work included; `--base <ref>` names any branch or commit. Without one, the stale page is still listed, just without the details.
 - A pull request can skip one page, only with a reason, by adding this line to its description (several pages can share a line, comma separated):
 
   ```
   wiki: no change needed for docs/wiki/<page>.md - <reason>
   ```
 
-  The check reads the description from `HYPATIA_PR_BODY` (the [wiki-check workflow](workflows.md) sets it). The older line without a page name still skips every page, with a warning that it is going away. Rereading and verifying is the better answer: the next pull request won't flag the page again.
+  A name must mean exactly one page: a bare name like `search` that matches two pages, or none, skips nothing and warns, so use the full path. The check reads the description from `HYPATIA_PR_BODY` (the [wiki-check workflow](workflows.md) sets it). The older line without a page name still skips every page, with a warning that it is going away. Rereading and verifying is the better answer: the next pull request won't flag the page again.
 - `coverage: [src]`: every top-level folder inside `src/` must be claimed by some page's `code:`, so a new folder of code always gets a page.
 
 Private pages count for both: their code can drift too. To make a failing check block merging, run `hypatia protect`; to see the check before each push on your own computer, run `hypatia hooks install` (see [workflows](workflows.md)).

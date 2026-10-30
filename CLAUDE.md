@@ -50,7 +50,9 @@ Milestone 3 added `hypatia init` and the privacy guard.
 - lib/drift.js - drift (a page with `code:` whose stamp no longer matches, or that has none, is
   stale; per-page skip line "wiki: no change needed for <page.md> - <reason>" in a PR) and
   coverage (every folder under `coverage:` has a page). `drift: off | warn | error` in
-  docs/hypatia.yml (true means error, missing means off); `check --warn` forces warn.
+  docs/hypatia.yml (older true means warn, missing means off); with a base, error fails only
+  stale pages the branch touched. `check --warn` forces warn. Stamps hash tracked files only,
+  never README, wiki pages or the config.
 - lib/protect.js - `hypatia protect`: makes the wiki-check job required on the default branch.
 - lib/hooks.js - `hypatia hooks install | remove`: a pre-push hook that runs the check as
   warnings and never blocks the push.

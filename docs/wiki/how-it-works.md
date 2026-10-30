@@ -2,7 +2,7 @@
 title: How it works
 parent: home
 code: [bin/hypatia.js, lib/build-graph.js, lib/text.js, lib/update-check.js]
-verified: a3d1fdf2bfa3
+verified: 6dfaa884cdbe
 ---
 
 # How it works
