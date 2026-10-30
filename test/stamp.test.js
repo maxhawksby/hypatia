@@ -17,6 +17,7 @@ function repo() {
   write(root, "src/a.js", "one\ntwo\n");
   write(root, "src/b.js", "three\n");
   write(root, "docs/wiki/a.md", "---\ntitle: A\nparent: home\ncode: [src/**]\n---\nAbout A.\n");
+  git(root, ["add", "-A"]);
   return { root, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
 }
 
@@ -41,14 +42,17 @@ test("stamp: a file added to or removed from the glob changes it; ignored files 
   try {
     const first = stamp.codeStamp(r.root, ["src/**"]);
     write(r.root, "src/c.js", "");
+    assert.strictEqual(stamp.codeStamp(r.root, ["src/**"]), first, "an untracked file does not count");
+    git(r.root, ["add", "src/c.js"]);
     const added = stamp.codeStamp(r.root, ["src/**"]);
     assert.notStrictEqual(added, first, "even an empty new file");
-    fs.rmSync(path.join(r.root, "src/c.js"));
+    git(r.root, ["rm", "-q", "-f", "src/c.js"]);
     assert.strictEqual(stamp.codeStamp(r.root, ["src/**"]), first);
     write(r.root, ".gitignore", "src/build/\n");
     write(r.root, "src/build/out.js", "generated\n");
+    git(r.root, ["add", "-A"]);
     assert.strictEqual(stamp.codeStamp(r.root, ["src/**"]), first, "git-ignored files are left out");
-    fs.renameSync(path.join(r.root, "src/b.js"), path.join(r.root, "src/d.js"));
+    git(r.root, ["mv", "src/b.js", "src/d.js"]);
     assert.notStrictEqual(stamp.codeStamp(r.root, ["src/**"]), first, "a rename changes it: paths count");
   } finally {
     r.cleanup();
@@ -107,6 +111,78 @@ test("verify keeps the rest of the page byte-identical", () => {
     const actual = stamp.codeStamp(r.root, ["src/**"]);
     assert.strictEqual(after, before.replace("verified: 000000000000", `verified: ${actual}`));
     assert.strictEqual(stamp.pageStamps(r.root, [{ path: "docs/wiki/a.md", code: ["src/**"] }]).get("docs/wiki/a.md").state, "current");
+  } finally {
+    r.cleanup();
+  }
+});
+
+test("stamp: a page whose code: covers itself, the README or the config can still be verified", () => {
+  const r = repo();
+  try {
+    write(r.root, "README.md", "# R\n");
+    write(r.root, "docs/hypatia.yml", "drift: error\n");
+    write(r.root, "docs/wiki/a.md", "---\ntitle: A\nparent: home\ncode: [\"**\"]\n---\nEverything.\n");
+    git(r.root, ["add", "-A"]);
+    const quiet = { cwd: r.root, log: () => {}, error: () => {} };
+    assert.strictEqual(stamp.verifyCommand(r.root, ["docs/wiki/a.md"], quiet), 0);
+    const pages = [{ path: "docs/wiki/a.md", code: ["**"] }];
+    assert.strictEqual(stamp.pageStamps(r.root, pages).get("docs/wiki/a.md").state, "current");
+    assert.deepStrictEqual(stamp.codeFiles(r.root, ["**"]), ["src/a.js", "src/b.js"]);
+    write(r.root, "src/a.js", "changed\n");
+    assert.strictEqual(stamp.pageStamps(r.root, pages).get("docs/wiki/a.md").state, "stale");
+  } finally {
+    r.cleanup();
+  }
+});
+
+test("stamp: a submodule counts as the commit it records, and is never read as a file", () => {
+  const r = repo();
+  try {
+    const sub = path.join(r.root, "src", "sub");
+    fs.mkdirSync(sub);
+    git(sub, ["init", "-q", "-b", "master"]);
+    write(sub, "x.txt", "one\n");
+    git(sub, ["add", "-A"]);
+    git(sub, ["commit", "-q", "-m", "one"], { name: "T", email: "t@example.com" });
+    git(r.root, ["add", "src/sub"]);
+    const first = stamp.codeStamp(r.root, ["src/**"]);
+    assert.ok(stamp.codeFiles(r.root, ["src/**"]).includes("src/sub"));
+    write(sub, "x.txt", "two\n");
+    assert.strictEqual(stamp.codeStamp(r.root, ["src/**"]), first, "an uncommitted change inside it does not count");
+    git(sub, ["commit", "-q", "-am", "two"], { name: "T", email: "t@example.com" });
+    git(r.root, ["add", "src/sub"]);
+    assert.notStrictEqual(stamp.codeStamp(r.root, ["src/**"]), first, "a new recorded commit does");
+    const out = [];
+    assert.strictEqual(stamp.verifyCommand(r.root, ["docs/wiki/a.md"], { cwd: r.root, log: (m) => out.push(m), error: (m) => out.push(m) }), 0, out.join("\n"));
+  } finally {
+    r.cleanup();
+  }
+});
+
+test("verify names untracked files its globs match, which the stamp leaves out", () => {
+  const r = repo();
+  try {
+    write(r.root, "src/new.js", "new\n");
+    const out = [];
+    assert.strictEqual(stamp.verifyCommand(r.root, ["docs/wiki/a.md"], { cwd: r.root, log: (m) => out.push(m), error: (m) => out.push(m) }), 0);
+    assert.match(out.join("\n"), /docs\/wiki\/a\.md: src\/new\.js left out of the stamp because git does not track them yet; git add them and verify again if they are part of the code\./);
+    assert.match(out.join("\n"), /against its code \(2 files\)/);
+  } finally {
+    r.cleanup();
+  }
+});
+
+test("verify handles a page that starts with a byte order mark, and never writes a page it cannot read", () => {
+  const r = repo();
+  try {
+    const file = path.join(r.root, "docs/wiki/a.md");
+    const before = "﻿---\ntitle: A\nparent: home\ncode: [src/**]\n---\nAbout A.\n";
+    fs.writeFileSync(file, before);
+    const out = [];
+    const opts = { cwd: r.root, log: (m) => out.push(m), error: (m) => out.push(m) };
+    assert.strictEqual(stamp.verifyCommand(r.root, ["docs/wiki/a.md"], opts), 0, out.join("\n"));
+    assert.strictEqual(fs.readFileSync(file, "utf8"), before.replace("code: [src/**]\n", `code: [src/**]\nverified: ${stamp.codeStamp(r.root, ["src/**"])}\n`));
+    assert.strictEqual(stamp.setVerified("﻿no front matter", "0123456789ab"), null);
   } finally {
     r.cleanup();
   }

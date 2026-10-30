@@ -77,6 +77,7 @@ test("drift: the change list names the changed functions or headings from git's 
     commit(repo.root, BEN, "Detect");
     write(repo.root, DETECTOR, "def detect(image):\n    a = 1\n    b = 2\n    c = 3\n    d = 5\n    return a\n");
     write(repo.root, "src/object_detection/boxes.py", "boxes = []\n");
+    git(repo.root, ["add", "src/object_detection/boxes.py"]);
     const r = check(repo.root, ["--base", "master"]);
     assert.strictEqual(r.code, 1, r.out);
     assert.match(r.out, /src\/object_detection\/boxes\.py \(new, 1 line\)/);
@@ -162,7 +163,10 @@ test("drift: modes - warn lists stale pages and passes, error fails, off says no
     assert.doesNotMatch(off.out, /out of date/);
     assert.strictEqual(check(repo.root, ["--base", "master"]).code, 1, "--base turns the check on when the config leaves it off");
     write(repo.root, "docs/hypatia.yml", "drift: true\n");
-    assert.strictEqual(check(repo.root).code, 1, "true is the older switch and means error");
+    const legacy = check(repo.root);
+    assert.strictEqual(legacy.code, 0, "true is the older switch and means warn");
+    assert.strictEqual(legacy.out.split('"drift: true" is from an older Hypatia and now means warn; set "drift: error" once every page is verified.').length, 2, "said once");
+    assert.match(legacy.out, /warning: docs\/wiki\/object-detection\.md is out of date/);
   } finally {
     repo.cleanup();
   }
@@ -273,7 +277,7 @@ test("drift: moving a file between two covered folders makes both pages stale", 
     const r = check(repo.root, ["--base", "master"]);
     assert.strictEqual(r.code, 1, r.out);
     assert.match(r.out, /object-detection\.md is out of date[^\n]*\n {4}src\/object_detection\/detector\.py \(\+0 -1\)/);
-    assert.match(r.out, /keyboard-teleop\.md is out of date[^\n]*\n {4}src\/keyboard_teleop\/detector\.py \(\+1 -0\)/);
+    assert.match(r.out, /keyboard-teleop\.md is out of date[^\n]*\n {4}src\/keyboard_teleop\/detector\.py \(new, 1 line\)/);
   } finally {
     repo.cleanup();
   }
@@ -333,4 +337,46 @@ test("skip lines: per-page names and reasons, the old global line, reasons on th
   assert.strictEqual(drift.skipLines("wiki: no change needed - \r\nreason").all, false);
   assert.strictEqual(drift.skipLines("wiki: no change needed\n- because").all, false);
   assert.strictEqual(drift.skipLines("wiki: no change needed for a.md - x").all, false, "a per-page line is not the global one");
+});
+
+test("drift: with a base, error mode fails only on stale pages this branch touched; the rest are warnings", () => {
+  const repo = branchRepo();
+  try {
+    // object detection's code changes on master after the pages were verified
+    git(repo.root, ["switch", "-q", "master"]);
+    write(repo.root, DETECTOR, "print('changed on master')\n");
+    commit(repo.root, BEN, "Detector on master");
+    git(repo.root, ["switch", "-q", "-c", "other"]);
+    write(repo.root, "notes.txt", "unrelated\n");
+    commit(repo.root, BEN, "Notes");
+    const mine = check(repo.root, ["--base", "master"]);
+    assert.strictEqual(mine.code, 0, mine.out);
+    assert.match(mine.out, /warning: docs\/wiki\/object-detection\.md is out of date[^\n]*This pull request did not change it or its code, so it does not fail the check\./);
+    assert.match(mine.out, /1 page is out of date \(listed above\), none of them changed by this pull request\./);
+    assert.strictEqual(check(repo.root).code, 1, "without a base every stale page fails");
+    write(repo.root, "src/object_detection/more.py", "x = 1\n");
+    commit(repo.root, BEN, "More detection");
+    const touched = check(repo.root, ["--base", "master"]);
+    assert.strictEqual(touched.code, 1, touched.out);
+    assert.match(touched.out, /hypatia: docs\/wiki\/object-detection\.md is out of date/);
+    // touching only the page blames it too
+    write(repo.root, TELEOP_PAGE, read(repo.root, TELEOP_PAGE).replace(/verified: \w+/, "verified: 000000000000"));
+    commit(repo.root, BEN, "Teleop page");
+    assert.match(check(repo.root, ["--base", "master"]).out, /hypatia: docs\/wiki\/keyboard-teleop\.md is out of date/);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("skip lines: a short name must mean exactly one page, or it skips nothing", () => {
+  const pages = [
+    { path: "docs/wiki/start-here.md", code: ["a/**"] },
+    { path: "docs/other/start-here.md", code: ["b/**"] },
+    { path: "docs/wiki/solo.md", code: ["c/**"] },
+  ];
+  const r = drift.resolveSkips(drift.skipLines("wiki: no change needed for start-here, solo - fine"), pages);
+  assert.deepStrictEqual([...r.skipped], [["docs/wiki/solo.md", "fine"]]);
+  assert.match(r.warnings[0], /skips 'start-here', which could mean docs\/wiki\/start-here\.md or docs\/other\/start-here\.md, so it skips neither\. Use the page's full path\./);
+  const full = drift.resolveSkips(drift.skipLines("wiki: no change needed for docs/other/start-here.md - fine"), pages);
+  assert.deepStrictEqual([...full.skipped.keys()], ["docs/other/start-here.md"]);
 });

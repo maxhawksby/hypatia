@@ -310,13 +310,15 @@ test("an older team file still lists exactly that team, matched to git by name a
     ]);
   }));
 
-test("config drift: off, warn or error; true/yes mean error, false/no or nothing mean off, a typo warns", () => {
+test("config drift: off, warn or error; true/yes (the older switch) mean warn, false/no or nothing mean off, a typo warns", () => {
   const mode = (text) => team.parseConfig(text).drift;
   assert.strictEqual(mode(""), "off");
   assert.strictEqual(mode("drift: warn\n"), "warn");
   assert.strictEqual(mode("drift: error\n"), "error");
   assert.strictEqual(mode("drift: OFF\n"), "off");
-  for (const v of ["true", "yes", "on"]) assert.strictEqual(mode(`drift: ${v}\n`), "error", v);
+  for (const v of ["true", "yes", "on"]) assert.strictEqual(mode(`drift: ${v}\n`), "warn", v);
+  assert.strictEqual(team.parseConfig("drift: yes\n").driftLegacy, "yes");
+  assert.strictEqual(team.parseConfig("drift: warn\n").driftLegacy, "");
   for (const v of ["false", "no"]) assert.strictEqual(mode(`drift: ${v}\n`), "off", v);
   assert.strictEqual(mode("drift:\n"), "off");
   const warnings = [];
