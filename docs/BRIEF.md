@@ -27,6 +27,8 @@ The go2-fusion team wiki turned into something bigger than one project: linked p
 - Publishing the package to npm or making the repo public.
 - Changing go2-fusion's own wiki.
 
+Note, 2026-10-29: since v1, the pull request check, the GitHub Wiki mirror, Discord pings, npm and the public repo have all shipped. The drift check now works by stamps: each page records the code it was last checked against (`hypatia verify`), and `drift: off | warn | error` decides whether a stale page is ignored, listed or fails the check.
+
 ## Milestones
 
 1. **Extract and polish**: the go2-fusion wiki runs from Hypatia, looking the same as today, with every feature tested and its bugs fixed.
@@ -49,5 +51,6 @@ The go2-fusion team wiki turned into something bigger than one project: linked p
 
 - What the starter pages should be for a repo that has no wiki yet (one per top folder, or just a home page).
 - When to bring back the drift check and GitHub login.
+- Decided 2026-10-29: the drift check came back as stamps (see the note under Not in scope); GitHub login is still open.
 - Decided 2026-10-27: Hypatia goes public on GitHub after milestone 4, right before the uconn-rec trial; npm comes later (name `hypatia` free today).
 - Decided 2026-10-27: uconn-rec's README emails (Max's and a demo student's) go on that repo's `allow:` list rather than being removed.

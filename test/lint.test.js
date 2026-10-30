@@ -86,6 +86,27 @@ test("TODO( markers are counted as information, never a failure", () => {
   }
 });
 
+test("a TODO( inside inline code or a fenced code block is an example, not a marker", () => {
+  const repo = makeRepo({ generic: true });
+  try {
+    const movement = fs.readFileSync(path.join(repo.root, "docs/wiki/movement.md"), "utf8");
+    write(
+      repo.root,
+      "docs/wiki/movement.md",
+      movement +
+        "\nWrite `TODO(owner): <question>` instead of guessing, or ``a `TODO(x)` in a longer span``.\n" +
+        "\n- In a list:\n\n  ```\n  TODO(ana): an example\n  ```\n" +
+        "\n~~~~\nTODO(ben): still code\n~~~\nTODO(ben): a shorter fence does not close it\n~~~~\n" +
+        "\nTODO(cy): this one is real, and so is this TODO(dee).\n",
+    );
+    const r = check(repo.root);
+    assert.strictEqual(r.status, 0, r.stderr);
+    assert.match(r.stdout, /2 TODO\( markers left in 1 page: docs\/wiki\/movement\.md\./);
+  } finally {
+    repo.cleanup();
+  }
+});
+
 test("check in a repo without Hypatia says so and gives the install prompt", () => {
   const repo = makeRepo({ generic: true });
   try {

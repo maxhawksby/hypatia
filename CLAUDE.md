@@ -27,15 +27,16 @@ Milestone 3 added `hypatia init` and the privacy guard.
 ## Layout
 
 - bin/hypatia.js - the CLI: `hypatia init`, `hypatia serve` (local site, live reload),
-  `hypatia build --out <dir>`, `hypatia check [--base <ref>]`, `hypatia mirror --out <dir>`,
-  `hypatia ping`, `hypatia upgrade`.
-- lib/init.js - `hypatia init`: starter page, skill, open command; public repos get the Pages
-  workflows and two GitHub settings after a yes. GitHub only through gh (HYPATIA_GH swaps it;
+  `hypatia build --out <dir>`, `hypatia check [--base <ref>] [--warn]`, `hypatia verify`,
+  `hypatia mirror --out <dir>`, `hypatia ping`, `hypatia upgrade`, `hypatia protect`, `hypatia hooks`.
+- lib/init.js - `hypatia init`: starter page, skill, open command, the wiki-check workflow and
+  `drift: warn` in every repo; public repos get the Pages workflows and two GitHub settings
+  after a yes. GitHub only through gh (HYPATIA_GH swaps it;
   tests never run the real one).
 - lib/upgrade.js - `hypatia upgrade`: re-renders the installed skill and workflows from this
-  version's templates (keeps branch and runner), adds wiki-check for a repo with the website,
-  offers `drift: true`. Also the one-line "setup is from an older Hypatia" notice in check and
-  serve. Installed files carry a version stamp and hash (lib/templates.js).
+  version's templates (keeps branch and runner), adds wiki-check to any repo that lacks it,
+  offers `drift: warn` when the config has no drift: line. Also the one-line "setup is from
+  an older Hypatia" notice in check and serve. Installed files carry a version stamp and hash (lib/templates.js).
 - lib/privacy.js - the privacy guard: patterns, allow list, masking. Private pages are left out
   in lib/build-graph.js (`publish: true`).
 - lib/build-graph.js - builds graph.json (pages, links, history, branches, GitHub work).
@@ -44,15 +45,23 @@ Milestone 3 added `hypatia init` and the privacy guard.
 - lib/serve.js - local server, file watcher, reload events.
 - lib/lint.js - the extra checks in `hypatia check`: code paths that match nothing, hubs README.md
   does not lead to, TODO( markers.
-- lib/drift.js - drift (a PR changed a page's code but not the page; escape line
-  "wiki: no change needed - <reason>") and coverage (every folder under `coverage:` has a page).
-  Both off until docs/hypatia.yml sets `drift: true` / `coverage: [src]`; `check --base` forces drift.
+- lib/stamp.js - stamps: a page's `verified:` line is a 12-hex sha256 of the files its `code:`
+  matches; `hypatia verify` writes it after the page is reread.
+- lib/drift.js - drift (a page with `code:` whose stamp no longer matches, or that has none, is
+  stale; per-page skip line "wiki: no change needed for <page.md> - <reason>" in a PR) and
+  coverage (every folder under `coverage:` has a page). `drift: off | warn | error` in
+  docs/hypatia.yml (older true means warn, missing means off); with a base, error fails only
+  stale pages the branch touched. `check --warn` forces warn. Stamps hash tracked files only,
+  never README, wiki pages or the config.
+- lib/protect.js - `hypatia protect`: makes the wiki-check job required on the default branch.
+- lib/hooks.js - `hypatia hooks install | remove`: a pre-push hook that runs the check as
+  warnings and never blocks the push.
 - lib/mirror.js - `hypatia mirror`: published pages into a GitHub Wiki clone (wiki-mirror workflow).
 - lib/ping.js - `hypatia ping`: Discord posts for review requests and questions (wiki-ping
   workflow); @mentions people's opt-in `discord_id` from the config, which graph.json carries.
 - site/ - the wiki web app (index.html, app.js, style.css), served as is. sample-graph.json
   is a made-up project shown when there is no data.
 - skills/, templates/workflows/ - wiki-keeper skill and workflows as templates with
-  {{PLACEHOLDERS}} (lib/templates.js lists them) that `hypatia init` fills in. Public repos get
-  wiki-site, wiki-refresh and wiki-check; `init --with check,mirror,ping` adds them to any repo.
+  {{PLACEHOLDERS}} (lib/templates.js lists them) that `hypatia init` fills in. Every repo gets
+  wiki-check, public repos also wiki-site and wiki-refresh; `init --with mirror,ping` adds those.
 - test/generic.test.js - nothing shipped or built may name the project Hypatia came from.

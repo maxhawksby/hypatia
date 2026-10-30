@@ -1,3 +1,4 @@
+# Made by Hypatia 0.4.0 (#4843fe8e). Run "hypatia upgrade" to update it.
 # Keep the wiki's "working on now" current when someone pushes to their own
 # branch. Pages only deploys from main, so this just asks the
 # Wiki site workflow to rebuild from it with fresh GitHub data.

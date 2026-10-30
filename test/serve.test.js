@@ -113,6 +113,18 @@ test("without built data, graph.json is missing so the site falls back to its sa
   }
 });
 
+test("the sample shows a mix of page stamps, and the site reads each state the builder writes", () => {
+  const { SITE } = require("../lib/serve");
+  const sample = JSON.parse(fs.readFileSync(path.join(SITE, "sample-graph.json"), "utf8"));
+  const count = (state) => sample.nodes.filter((n) => n.stamp && n.stamp.state === state).length;
+  assert.deepStrictEqual([count("stale"), count("unverified")], [2, 1]);
+  assert.ok(count("current") > 5);
+  assert.strictEqual(count("none") + count("stale") + count("unverified") + count("current"), sample.nodes.length);
+  const app = fs.readFileSync(path.join(SITE, "app.js"), "utf8");
+  for (const state of ["current", "stale", "unverified"]) assert.match(app, new RegExp(`\\b${state}: "`), state);
+  assert.match(app, /older data has no stamp/); // graph.json from before stamps still loads
+});
+
 test("pushes events to open browsers over Server-Sent Events", async () => {
   const s = await start();
   const l = listen(s.port);

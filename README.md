@@ -39,17 +39,18 @@ By hand instead: `npx hypatia init`, then ask your agent to write the pages with
 
 ```shell
 npx hypatia check      # are the pages in step with the code? (also says if Hypatia isn't installed)
+npx hypatia verify docs/wiki/<page>.md   # mark a page as reread against today's code
 npx hypatia upgrade    # bring an older install up to the latest version
 ```
 
-Your agent runs `check` before every pull request. When it says the setup is old, the agent runs `upgrade` with your okay.
+Your agent runs `check` before each commit, rereads every page it lists, fixes what changed, and runs `verify`. When the check says the setup is old, the agent runs `upgrade` with your okay.
 
 ## What you get
 
 - **Map**: every page is a node, linked the way the code is, like an Obsidian graph.
 - **Team view**: who is working on which part, from branches, issues and pull requests. No status sheet.
 - **Agent skill**: Claude Code, Codex or Cursor updates the pages when the code changes.
-- **Drift check**: a pull request that changes code but not its page fails, so pages never fall behind.
+- **Drift check**: each page is stamped with the code it was checked against. When that code changes, the check lists the page until it is reread; set `drift: error` to fail the pull request.
 - **Website**: public repos publish to GitHub Pages; private repos open locally with one command.
 - **Privacy guard**: emails, phone numbers and keys never reach the website.
 

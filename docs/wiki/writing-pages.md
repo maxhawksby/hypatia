@@ -1,7 +1,8 @@
 ---
 title: Writing pages
 parent: start-here
-code: [lib/lint.js, lib/drift.js]
+code: [lib/lint.js, lib/drift.js, lib/globs.js]
+verified: 4cf738384c0e
 ---
 
 # Writing pages
@@ -13,6 +14,7 @@ Each page is `docs/wiki/<slug>.md`: lowercase words joined by `-`, starting with
 title: Search
 parent: web-app             # the hub it belongs under; a hub uses "home"
 code: [web/src/search/**]   # optional: the code this page is about
+verified: 1a2b3c4d5e6f      # written by hypatia verify, never by hand
 private: true               # optional: on the local site only, never on the website
 ---
 ```
@@ -23,23 +25,27 @@ A good page explains one part of the code in plain English: what it does for the
 
 - Every page has a title and a parent that exists, and following parents from any page reaches README.md.
 - Every link from a wiki page, and every link into `docs/wiki/`, points at a file that exists. README.md belongs to the project rather than the wiki, so its links to other repo files only warn.
-- Every `code:` path or glob matches at least one file in the repo (tracked or new). Otherwise the page points at nothing, usually because the code moved.
-- It warns, without failing, when a hub page is not reachable by links from README.md, and it counts the `TODO(` markers left in the pages.
+- Every `code:` path or glob matches at least one file in the repo (tracked or new). Otherwise the page points at nothing, usually because the code moved. In a glob, `**` is any number of folders, `*` is anything inside one folder name, and `?` is one character. A plain folder path with no wildcard covers everything inside it, so `src/search` works like `src/search/**`.
+- It warns, without failing, when a hub page is not reachable by links from README.md, and it counts the `TODO(` markers left in the pages. A marker inside code (an inline `code` span or a fenced block) is an example, so it is not counted.
 - It runs the [privacy guard](privacy-guard.md).
 
 ## Keeping pages in step with the code
 
-Two more checks, both off until [the config](configuration.md) turns them on:
+A page with `code:` can carry a stamp, `verified: <12 characters>`: a fingerprint of every file git tracks that its `code:` matches (paths and contents; Windows line endings give the same stamp, and a submodule counts as the commit it records). Files git does not track yet never count, so `git add` a new file before verifying; `verify` names any it left out. The wiki's own pages, README.md and the config never count either, so a page can't go stale by being edited. Run `hypatia verify <page.md>` after rereading the page against that code, and fixing it if needed; it writes the stamp and changes nothing else. `hypatia verify --all` stamps every page with `code:`. The stamp means "someone checked this page against this exact code".
 
-- `drift: true`: on a pull request, if code a page's `code:` covers changed but the page did not, the check fails and names the page. When a change truly does not affect what any page says (a rename, a comment), add this line to the pull request description instead:
+When the code changes, the stamp stops matching and the page is **stale**. A page with `code:` and no stamp is **unverified**, which counts as stale. Two checks in [the config](configuration.md) use this:
+
+- `drift: warn` (what new installs get) lists stale pages and still passes; `drift: error` fails the check until each one is reread and verified; `drift: off`, or no `drift:` line, skips it. The older `true` (or `yes`, `on`) now means warn, with a notice to switch to `drift: error`; `false` means off. `hypatia check --warn` lists them without failing for one run, `--no-drift` skips them, and `--base <ref>` turns the check on as error when the config leaves it off.
+- With a base to compare against, each stale page also lists the files that changed and roughly where, and `drift: error` fails only the stale pages this branch touched (the page or the code it covers). Other stale pages show as warnings, so one pull request never answers for another's drift. Without a base, every stale page fails. In GitHub Actions that is the branch the pull request goes into; on your computer, origin's default branch, uncommitted work included; `--base <ref>` names any branch or commit. Without one, the stale page is still listed, just without the details.
+- A pull request can skip one page, only with a reason, by adding this line to its description (several pages can share a line, comma separated):
 
   ```
-  wiki: no change needed - <reason>
+  wiki: no change needed for docs/wiki/<page>.md - <reason>
   ```
 
-  The reason is required, on the same line. A moved file counts at its old place and its new one, so moving code out of a folder flags that folder's page too. In GitHub Actions, `hypatia check` compares with the branch the pull request goes into, and reads the description from `HYPATIA_PR_BODY` (the [wiki-check workflow](installing.md) sets it). On your computer it compares with origin's default branch, uncommitted work included. `hypatia check --base <ref>` runs it against any branch or commit, config or not; `--no-drift` skips it.
+  A name must mean exactly one page: a bare name like `search` that matches two pages, or none, skips nothing and warns, so use the full path. The check reads the description from `HYPATIA_PR_BODY` (the [wiki-check workflow](workflows.md) sets it). The older line without a page name still skips every page, with a warning that it is going away. Rereading and verifying is the better answer: the next pull request won't flag the page again.
 - `coverage: [src]`: every top-level folder inside `src/` must be claimed by some page's `code:`, so a new folder of code always gets a page.
 
-Private pages count for both: their code can drift too.
+Private pages count for both: their code can drift too. To make a failing check block merging, run `hypatia protect`; to see the check before each push on your own computer, run `hypatia hooks install` (see [workflows](workflows.md)).
 
-`hypatia check` and `hypatia build` fail until a broken link is fixed. While you write, `hypatia serve` keeps the site updating through it: the link shows struck out, and a note lists it. See [how it works](how-it-works.md).
+`hypatia check` and `hypatia build` fail until a broken link is fixed. While you write, `hypatia serve` keeps the site updating through it: the link shows struck out, and a note lists it. See [the website](the-website.md#on-your-computer).

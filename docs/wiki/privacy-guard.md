@@ -2,6 +2,7 @@
 title: The privacy guard
 parent: how-it-works
 code: [lib/privacy.js]
+verified: 9adf5235f6fa
 ---
 
 # The privacy guard

@@ -80,6 +80,24 @@ test("the skill tells agents to check pages with hypatia, and keeps people's dat
   assert.match(app, /Run `hypatia check` until it passes/);
 });
 
+test("the skill is a librarian handbook: check before each commit, reread, verify, and ask before deleting pages", () => {
+  const skill = templates.read("skills/wiki-keeper/SKILL.md");
+  assert.match(skill, /## Before every commit that touches code a page covers/);
+  assert.match(skill, /\{\{HYPATIA\}\} check --base origin\/\{\{DEFAULT_BRANCH\}\}/);
+  assert.match(skill, /\{\{HYPATIA\}\} verify \{\{WIKI_DIR\}\}\/<slug>\.md/);
+  assert.match(skill, /Rewrite only the sections the change affects/);
+  assert.match(skill, /Verify only after you actually reread the code/);
+  assert.match(skill, /Never delete or merge pages without asking the human first/);
+  assert.match(skill, /wiki: no change needed for \{\{WIKI_DIR\}\}\/<slug>\.md - <reason>/);
+  assert.match(skill, /each page you updated and why, one line each/);
+  assert.match(skill, /Only with their okay, run `\{\{HYPATIA\}\} upgrade --yes`/);
+  // the old rule (a page must change whenever its code does) and the global skip line are gone
+  assert.doesNotMatch(skill, /drift: true/);
+  assert.doesNotMatch(skill, /^wiki: no change needed - <reason>$/m);
+  assert.doesNotMatch(skill, /\u2014/, "no em dashes");
+  assert.ok(skill.split("\n").length <= 110, "the skill stays short");
+});
+
 test("workflow templates never put a GitHub expression inside a shell script, and the mirror runs on the default branch only", () => {
   for (const rel of templates.TEMPLATES.filter((t) => t.endsWith(".yml"))) {
     const lines = templates.read(rel).split("\n");
