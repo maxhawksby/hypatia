@@ -97,7 +97,28 @@ test("drift: without a base it works on any branch and says how to see what chan
     git(repo.root, ["remote", "remove", "origin"]); // no default branch to compare with
     const r = check(repo.root);
     assert.strictEqual(r.code, 1, r.out);
-    assert.match(r.out, /docs\/wiki\/keyboard-teleop\.md is out of date: code changed since last verified \(code: src\/keyboard_teleop\/\*\*\)\. Reread those files, update the sections of the page about them, then run 'hypatia verify docs\/wiki\/keyboard-teleop\.md'\. To see which files changed, run 'hypatia check --base origin\/master'\./);
+    assert.match(r.out, /docs\/wiki\/keyboard-teleop\.md is out of date: code changed since last verified \(code: src\/keyboard_teleop\/\*\*\)\. Reread those files, update the sections of the page about them, then run 'hypatia verify docs\/wiki\/keyboard-teleop\.md'\. To see which files changed, run 'hypatia check --base master'\./, "no origin: the local master is suggested");
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("drift: the --base hint names a ref that exists: origin's default branch, else local main or master, else none", () => {
+  const repo = branchRepo();
+  try {
+    write(repo.root, "src/keyboard_teleop/teleop.py", "print('new keys')\n");
+    assert.strictEqual(drift.suggestedBase(repo.root), "origin/master");
+    assert.match(check(repo.root).out, /Changed since origin\/master:/, "with an origin, the details come from it");
+    git(repo.root, ["remote", "remove", "origin"]);
+    git(repo.root, ["branch", "-q", "-m", "master", "main"]);
+    assert.strictEqual(drift.suggestedBase(repo.root), "main");
+    assert.match(check(repo.root).out, /run 'hypatia check --base main'\./);
+    git(repo.root, ["branch", "-q", "-m", "main", "trunk"]);
+    assert.strictEqual(drift.suggestedBase(repo.root), null);
+    const r = check(repo.root);
+    assert.strictEqual(r.code, 1, r.out);
+    assert.match(r.out, /then run 'hypatia verify docs\/wiki\/keyboard-teleop\.md'\.\n/);
+    assert.doesNotMatch(r.out, /--base/);
   } finally {
     repo.cleanup();
   }
