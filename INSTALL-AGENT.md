@@ -2,7 +2,7 @@
 
 You are a coding agent (Claude Code, Codex, Cursor or similar) and a human asked you to install Hypatia in the repo you are working in. Hypatia adds a team wiki: Markdown pages in `docs/wiki/`, a map of how the code connects, and a view of who is working on what. Follow these steps in order. Run every command from the repo's top folder.
 
-**Already installed?** If `.claude/skills/wiki-keeper/SKILL.md` exists, update instead of installing: run `npx --yes hypatia upgrade --dry-run`, show the human the plan (it may turn on the drift check and replace files edited by hand), and with their okay run `npx --yes hypatia upgrade --yes` (add `--no-drift` if they want the drift check off). Then go to step 6.
+**Already installed?** If `.claude/skills/wiki-keeper/SKILL.md` exists, update instead of installing: run `npx --yes hypatia upgrade --dry-run`, show the human the plan (it may add `drift: warn` to the config and replace files edited by hand), and with their okay run `npx --yes hypatia upgrade --yes` (add `--no-drift` if they do not want `drift: warn` added). Then go to step 6.
 
 ## 1. Check the basics
 
@@ -62,6 +62,8 @@ npx --yes hypatia check
 
 Fix what it reports and run it again until it prints `Wiki check passed`. Warnings do not fail the check, but fix any "no link leads to it" warning by linking that hub from start-here.
 
+Init set `drift: warn`, so the check also lists every page with `code:` as never verified. You just wrote those pages from the code, so stamp them: `npx --yes hypatia verify --all`. From now on, the skill has the agent reread a page and run `hypatia verify <page>` whenever its code changes.
+
 If the privacy guard flags something you did not write (for example an email address already in README.md), show the human the line and ask. If they say it is public and fine to publish, add it to `docs/hypatia.yml`:
 
 ```yaml
@@ -75,6 +77,7 @@ Never allow a key, a password or a token: those must be removed.
 - Open the wiki locally: `npm run wiki` if init added that script, else `npx hypatia serve` (opens http://localhost:4410/).
 - Public repo with the website set up: once the new files are committed and pushed to the default branch, the wiki is published at `https://<owner>.github.io/<repo>/` (init printed the exact address).
 - List the pages you wrote and the `TODO(` questions you left for them.
+- Optional: `npx hypatia protect` (after the check workflow is pushed) makes the wiki check required before merging; `npx hypatia hooks install` warns before each push on this computer.
 
 Do not commit or push unless the human asks you to.
 
