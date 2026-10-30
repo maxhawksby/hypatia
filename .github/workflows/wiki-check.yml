@@ -1,17 +1,21 @@
-# Made by Hypatia 0.3.1 (#062eb91d). Run "hypatia upgrade" to update it.
+# Made by Hypatia 0.3.1 (#b32c8323). Run "hypatia upgrade" to update it.
 # Checks the wiki on every pull request: pages, links, code: paths and the
-# privacy guard. With "drift: true" in docs/hypatia.yml it also fails when the
-# pull request changes code a page covers but not the page, unless the
-# description has the line "wiki: no change needed - <reason>". With
+# privacy guard. The drift: setting in docs/hypatia.yml covers pages that
+# fell behind the code they explain: "drift: warn" (what new installs get)
+# lists them and still passes, "drift: error" fails the pull request until
+# each page is updated or skipped with "wiki: no change needed for <page.md>
+# - <reason>" in the description, and "drift: off" skips it. With
 # "coverage: src" it fails when a folder in src/ has no page.
+# A failing check only blocks merging once it is required: run
+# "hypatia protect" to make the wiki-check job required on the default branch.
 # Free: Node on a GitHub runner. No secrets.
 name: Wiki check
 
 on:
   pull_request:
     branches: [main]
-    # "edited" runs the check again when someone adds the
-    # "wiki: no change needed - <reason>" line to the description.
+    # "edited" runs the check again when someone adds a
+    # "wiki: no change needed ..." line to the description.
     types: [opened, synchronize, reopened, edited]
 
 permissions:

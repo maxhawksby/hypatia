@@ -3,7 +3,7 @@ name: wiki-keeper
 description: Keep the team wiki (README.md + docs/wiki/) true to the code. Use before every commit that touches code a wiki page covers, when a folder or program is added or removed, before opening a pull request, when starting a task (to claim it on the wiki graph), when someone asks to update or check the wiki, to answer wiki questions, or to ask a teammate for review.
 ---
 
-<!-- Made by Hypatia 0.3.1 (#15e16d04). Run "hypatia upgrade" to update it. -->
+<!-- Made by Hypatia 0.3.1 (#f4a65ab8). Run "hypatia upgrade" to update it. -->
 
 # Wiki keeper
 
@@ -45,8 +45,10 @@ So the wiki graph shows who is working on what:
 4. New part of the code (a new top-level folder, package or service): create `docs/wiki/<slug>.md` with title, parent (its hub) and `code:` paths that cover the whole folder (`code: [src/<folder>/**]`), link it from the hub page, and verify it. With `coverage:` set in `docs/hypatia.yml`, the check fails until every folder there has a page.
 5. Never delete or merge pages without asking the human first. A removed part of the code is a question for them, not a cleanup for you.
 6. Never invent facts: if you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>`. Keep pages short: a few paragraphs or bullets, linking to other pages rather than repeating them.
-7. Run `node bin/hypatia.js check --base origin/main` again on your own work until it prints "Wiki check passed", then commit the page changes with the code.
-8. If the check says this project's Hypatia setup is from an older version, run `node bin/hypatia.js upgrade --dry-run`, show the human the plan and ask before going on (they decide on the drift setting, and whether hand-edited files may be replaced). Only with their okay, run `node bin/hypatia.js upgrade --yes` (add `--no-drift` if they said no to the drift check) and commit the result in the same pull request.
+7. Run `node bin/hypatia.js check --base origin/main` again on your own work until it prints "Wiki check passed", then commit the page changes with the code. `node bin/hypatia.js check --warn` lists the same problems without failing, for a quick look; the pass that counts is the one without it.
+8. If the check says this project's Hypatia setup is from an older version, run `node bin/hypatia.js upgrade --dry-run`, show the human the plan and ask before going on (they decide on the drift setting, and whether hand-edited files may be replaced). Only with their okay, run `node bin/hypatia.js upgrade --yes` (add `--no-drift` if they do not want it to add `drift: warn` to a config that has no `drift:` line) and commit the result in the same pull request.
+
+Optional, on a laptop: `node bin/hypatia.js hooks install` adds a git pre-push hook that prints the check as warnings before each push and never blocks it. Suggest it to the human; don't install it unasked.
 
 Skipping a page is the exception. Prefer verify. Only when a page truly cannot be brought up to date in this pull request, and you can say why honestly, add a line for that one page to the pull request description:
 
