@@ -307,6 +307,9 @@ async function check(root, argv) {
       defaultBranch: drift.suggestedBase(root),
     });
     found.errors.push(...driftRun.errors);
+    if (config.driftLegacy && !opts.noDrift) {
+      found.warnings.push(`"drift: ${config.driftLegacy}" is from an older Hypatia and now means warn; set "drift: error" once every page is verified.`);
+    }
     found.warnings.push(...driftRun.warnings);
     for (const n of driftRun.notes) console.error(`hypatia: ${n}`);
     const driftNote = driftRun.summary;
