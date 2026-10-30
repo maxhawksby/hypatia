@@ -113,7 +113,11 @@
    "x": 0,
    "y": 0,
    "backlinks": [],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "none",
+    "stored": null
+   }
   },
   {
    "id": "api",
@@ -137,7 +141,11 @@
     "recipes-api",
     "web-app"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "14c2529eb449"
+   }
   },
   {
    "id": "auth-api",
@@ -163,6 +171,10 @@
     "author": "Dana Okafor",
     "person": "dana",
     "message": "(sample) Auth: log why a link was refused"
+   },
+   "stamp": {
+    "state": "current",
+    "stored": "11a52682f93b"
    }
   },
   {
@@ -183,7 +195,11 @@
     "file-storage",
     "recipes-api"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "stale",
+    "stored": "9f2126ee1fd8"
+   }
   },
   {
    "id": "data",
@@ -205,7 +221,11 @@
     "larkspur",
     "search-index"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "3a6eb0790f39"
+   }
   },
   {
    "id": "database",
@@ -233,6 +253,10 @@
     "author": "Eli Brandt",
     "person": "eli",
     "message": "(sample) Database: drop the unused tags table"
+   },
+   "stamp": {
+    "state": "current",
+    "stored": "3549b0028b75"
    }
   },
   {
@@ -252,7 +276,11 @@
    "backlinks": [
     "operations"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "stale",
+    "stored": "efb5202cc868"
+   }
   },
   {
    "id": "feed",
@@ -271,7 +299,11 @@
    "backlinks": [
     "web-app"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "c8bc2586cdd8"
+   }
   },
   {
    "id": "file-storage",
@@ -291,7 +323,11 @@
     "data",
     "recipe-editor"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "abad296a3050"
+   }
   },
   {
    "id": "monitoring",
@@ -316,6 +352,10 @@
     "author": "Chen Wei",
     "person": "chen",
     "message": "(sample) Monitoring: alert on slow searches"
+   },
+   "stamp": {
+    "state": "unverified",
+    "stored": null
    }
   },
   {
@@ -337,7 +377,11 @@
     "larkspur",
     "monitoring"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "74de07c4e919"
+   }
   },
   {
    "id": "recipe-editor",
@@ -362,6 +406,10 @@
     "author": "Bruno Silva",
     "person": "bruno",
     "message": "(sample) Recipe editor: show upload progress"
+   },
+   "stamp": {
+    "state": "current",
+    "stored": "eec5604ad97b"
    }
   },
   {
@@ -383,7 +431,11 @@
     "recipe-editor",
     "search"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "35e0eb671153"
+   }
   },
   {
    "id": "search-index",
@@ -411,6 +463,10 @@
     "author": "Ada Park",
     "person": "ada",
     "message": "(sample) Search index: rebuild in batches"
+   },
+   "stamp": {
+    "state": "current",
+    "stored": "07534e86a2d2"
    }
   },
   {
@@ -437,6 +493,10 @@
     "author": "Ada Park",
     "person": "ada",
     "message": "(sample) Search: rank exact names first"
+   },
+   "stamp": {
+    "state": "current",
+    "stored": "241932906782"
    }
   },
   {
@@ -456,7 +516,11 @@
    "backlinks": [
     "web-app"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "48d7c508cc0c"
+   }
   },
   {
    "id": "web-app",
@@ -481,7 +545,11 @@
     "search",
     "sign-in"
    ],
-   "last_change": null
+   "last_change": null,
+   "stamp": {
+    "state": "current",
+    "stored": "a7a1d1b1b26d"
+   }
   }
  ],
  "edges": [
