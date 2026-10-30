@@ -1,23 +1,24 @@
 ---
 name: wiki-keeper
-description: Keep the team wiki (README.md + docs/wiki/) true to the code. Use whenever code a wiki page documents changes, when a folder or program is added or removed, before opening a pull request, when starting a task (to claim it on the wiki graph), when someone asks to update or check the wiki, to answer wiki questions, or to ask a teammate for review.
+description: Keep the team wiki (README.md + docs/wiki/) true to the code. Use before every commit that touches code a wiki page covers, when a folder or program is added or removed, before opening a pull request, when starting a task (to claim it on the wiki graph), when someone asks to update or check the wiki, to answer wiki questions, or to ask a teammate for review.
 ---
 
-<!-- Made by Hypatia 0.3.1 (#442b2315). Run "hypatia upgrade" to update it. -->
+<!-- Made by Hypatia 0.3.1 (#15e16d04). Run "hypatia upgrade" to update it. -->
 
 # Wiki keeper
 
-The wiki is a graph: README.md is the center page, hub pages hang off it, and each part of the code has one page under a hub. Pages live in `docs/wiki/<slug>.md`. The site (`node bin/hypatia.js serve`) shows the map, the pages, and who is working on what. When the repo turns on the drift check (`drift: true` in `docs/hypatia.yml`), a pull request fails while a page falls behind its code, so keep pages current as you go.
-
-Every page starts with front matter:
+You are this repo's librarian. The wiki is a graph: README.md is the center page, hub pages hang off it, and each part of the code has one page under a hub, in `docs/wiki/<slug>.md`. The site (`node bin/hypatia.js serve`) shows the map, the pages, and who is working on what. Every page starts with front matter:
 
 ```
 ---
 title: Search
 parent: web-app               # hub pages use "home"
-code: [web/src/search/**]     # optional: the repo paths this page documents
+code: [web/src/search/**]     # the repo paths this page documents
+verified: 1a2b3c4d5e6f        # written by hypatia verify; never type it by hand
 ---
 ```
+
+`verified:` is a stamp of the code under `code:`. It means "a librarian checked this page against today's code". When that code changes, the stamp stops matching and the page is stale; a page with `code:` and no stamp is unverified. `drift:` in `docs/hypatia.yml` decides what happens: `off` ignores it, `warn` lists stale pages, `error` fails the check.
 
 ## Privacy (a firm rule, always)
 
@@ -30,36 +31,34 @@ Pages describe how the code works, never real records, user names, emails or key
 So the wiki graph shows who is working on what:
 
 1. Find an open GitHub issue for the task, or open one: `gh issue list --search "<words>"`, `gh issue create`.
-2. Label it `wiki:<slug>` for the page it touches (create the label if missing: `gh label create wiki:<slug>`), and assign yourself: `gh issue edit <n> --add-label wiki:<slug> --add-assignee @me`.
+2. Label it `wiki:<slug>` for the page it touches (create the label if missing: `gh label create wiki:<slug>`), and assign yourself: `gh issue edit <n> --add-label wiki:<slug> --add-assignee @me`. If `gh` is not signed in, tell the human the exact commands instead of skipping this.
 
-If `gh` is not signed in, tell the human the exact commands instead of skipping this.
+## Before every commit that touches code a page covers
 
-## Committing
-
-Write every commit message as one short sentence that says exactly what changed, starting with the part of the project it touches (`Search: rank exact names first`). Never `fix`, `wip` or `updates`. The wiki shows these messages next to each person's branch, so they are how teammates see what you're working on.
-
-## Before opening a pull request (or whenever code changed)
-
-1. `git fetch origin`, then run `node bin/hypatia.js check --base origin/main`. Besides the usual checks, it names every page whose `code:` paths changed (committed or not) while the page did not.
-2. For each page it names, read the diff for that code (`git diff origin/main...HEAD -- <paths>`) and update each page in plain English a college freshman would follow:
+1. `git fetch origin`, then run `node bin/hypatia.js check --base origin/main`. It lists each stale or unverified page and the files under its `code:` that changed.
+2. For each page it lists, reread those files (and `git diff origin/main...HEAD -- <paths>`). Rewrite only the sections the change affects; never rewrite a whole page for a small change. Write in plain English a college freshman would follow:
    - what that part does for the project,
    - what it uses (other parts, services, data, hardware),
    - how it breaks (known failure modes and what they look like).
    Not code internals: no function names or line-by-line walkthroughs.
-3. New part of the code (a new top-level folder, package or service): create `docs/wiki/<slug>.md` with title, parent (its hub) and `code:` paths that cover the whole folder (`code: [src/<folder>/**]`), then link it from the hub page. With `coverage:` set in `docs/hypatia.yml`, the check fails until every folder there has a page.
-   Removed part: delete its page and its link from the hub.
-4. Never invent facts. If you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>` instead of guessing.
-5. Keep pages short: a few short paragraphs or bullets. Link to other pages rather than repeating them.
-6. Run `node bin/hypatia.js check` until it prints "Wiki check passed".
-7. If the check says this project's Hypatia setup is from an older version, run `node bin/hypatia.js upgrade --dry-run`, show the human the plan and ask before going on (they decide whether to turn on the drift check, and whether hand-edited files may be replaced). With their okay, run `node bin/hypatia.js upgrade --yes` (add `--no-drift` if they said no to the drift check) and commit the result in the same pull request.
+3. Then run `node bin/hypatia.js verify docs/wiki/<slug>.md`. Verify only after you actually reread the code. If nothing on the page needed to change, rereading and verifying is still the right move. Never verify a page you did not check.
+4. New part of the code (a new top-level folder, package or service): create `docs/wiki/<slug>.md` with title, parent (its hub) and `code:` paths that cover the whole folder (`code: [src/<folder>/**]`), link it from the hub page, and verify it. With `coverage:` set in `docs/hypatia.yml`, the check fails until every folder there has a page.
+5. Never delete or merge pages without asking the human first. A removed part of the code is a question for them, not a cleanup for you.
+6. Never invent facts: if you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>`. Keep pages short: a few paragraphs or bullets, linking to other pages rather than repeating them.
+7. Run `node bin/hypatia.js check --base origin/main` again on your own work until it prints "Wiki check passed", then commit the page changes with the code.
+8. If the check says this project's Hypatia setup is from an older version, run `node bin/hypatia.js upgrade --dry-run`, show the human the plan and ask before going on (they decide on the drift setting, and whether hand-edited files may be replaced). Only with their okay, run `node bin/hypatia.js upgrade --yes` (add `--no-drift` if they said no to the drift check) and commit the result in the same pull request.
 
-If a change truly does not affect what any page says (a rename, a comment, a refactor with identical behavior), add this line to the pull request description instead of editing the page. The drift check accepts it; the reason is required:
+Skipping a page is the exception. Prefer verify. Only when a page truly cannot be brought up to date in this pull request, and you can say why honestly, add a line for that one page to the pull request description:
 
 ```
-wiki: no change needed - <reason>
+wiki: no change needed for docs/wiki/<slug>.md - <reason>
 ```
 
-Never use it to skip a page that is now wrong.
+Never use it to skip a page that is now wrong. The older line without a page name still works but is going away; do not write it.
+
+## Committing
+
+Write every commit message as one short sentence that says exactly what changed, starting with the part of the project it touches (`Search: rank exact names first`). Never `fix`, `wip` or `updates`. The wiki shows these messages next to each person's branch, so they are how teammates see what you're working on.
 
 ## Answering questions
 
@@ -67,7 +66,7 @@ Teammates ask questions on wiki pages from the site ("Ask the team"); each one i
 
 1. When asked to answer questions, list the open ones for the pages you know: `gh issue list --label question` (narrow with `--label wiki:<slug>`), then `gh issue view <n>`.
 2. Read the page and its code, then answer in plain English a newcomer can follow, as a comment on the issue: `gh issue comment <n> --body "..."`. Link the wiki page and the code on GitHub (`https://github.com/maxhawksby/hypatia/blob/main/<path>`).
-3. If the answer belongs on the page (others will ask it too), update the page in the same pull request as any code change, or in a small wiki-only pull request.
+3. If the answer belongs on the page (others will ask it too), update the page in the same pull request as any code change, or in a small wiki-only pull request, and verify it.
 4. Never guess. If you don't know, say what you checked and who might know (the page's owner), and leave the question open.
 
 A comment from someone other than the asker marks the question answered on the site.
@@ -80,7 +79,7 @@ Open the pull request (`gh pr create`), using the repo's pull request template i
 - **Why**: why the project or the team needs it.
 - **Before** and **After**: what happened before, what happens now.
 - **How to test**: steps a teammate can follow.
-- **Wiki**: the page you updated, or `wiki: no change needed - <reason>` on its own line.
+- **Wiki**: each page you updated and why, one line each (`docs/wiki/search.md - ranking now prefers exact names`), plus any per-page skip line.
 
 Request a teammate: `gh pr create --reviewer <login>` or `gh pr edit <n> --add-reviewer <login>`. The People list on the site shows who is on the team and their GitHub logins (names, colors and focus lines can be set in `docs/hypatia.yml`). Label nothing extra: the site shows the review request, and when the repo has the wiki-ping workflow the request is also posted to the team's Discord.
 
@@ -90,6 +89,6 @@ Request a teammate: `gh pr create --reviewer <login>` or `gh pr edit <n> --add-r
 - every link from a wiki page, and every link into docs/wiki/, works (README.md's links to other repo files only warn);
 - every `code:` path or glob matches at least one file in the repo;
 - following parents from any page reaches README.md (no orphans, no loops);
-- with `drift: true` in `docs/hypatia.yml` (on pull requests) or `--base <ref>`: every page whose `code:` paths changed was changed too, unless the pull request has the line above;
-- with `coverage:` in `docs/hypatia.yml`: every top-level folder in those folders is claimed by some page's `code:`.
+- with `drift: warn` or `drift: error`: every page with `code:` has a `verified:` stamp that matches its code (`--base <ref>` adds what changed; `--warn` only lists);
+- with `coverage:` in `docs/hypatia.yml`: every top-level folder in those folders is claimed by some page's `code:`;
 - warns when a hub page (parent: home) is not reachable by links from README.md, and counts `TODO(` markers.
