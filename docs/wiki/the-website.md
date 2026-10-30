@@ -2,6 +2,7 @@
 title: The website
 parent: how-it-works
 code: [site/**, lib/serve.js]
+verified: 991e4ff4a083
 ---
 
 # The website
@@ -10,8 +11,8 @@ The website is where people read the wiki. It is plain HTML, CSS and JavaScript 
 
 ## What is on it
 
-- **The map**: every page as a node, the center page in the middle and hubs around it. Pages are grey; a page takes a teammate's color while they work on it.
-- **Pages**: the page itself, its breadcrumb, a Connections list and backlinks.
+- **The map**: every page as a node, the center page in the middle and hubs around it. Pages are grey; a page takes a teammate's color while they work on it. A page whose code changed since it was last checked gets a solid red ring, and one never checked gets a dashed ring; buttons in the map's legend show only those pages.
+- **Pages**: the page itself, its breadcrumb, a Connections list and backlinks. A page with `code:` says whether it is checked against the current code, and if not, what to ask your agent (see [keeping pages in step](writing-pages.md#keeping-pages-in-step-with-the-code)).
 - **The sidebar**: the page tree, the people (from [the team view](team-view.md)) with all open work, and recent changes.
 - **Search** with highlights, a quick switcher (Ctrl+K), and resizable panes. The map can be hidden.
 - **The Ask box** under each page: it turns a question or a change request into a ready prompt to copy into your coding agent, or opens a question for the team as a GitHub issue.

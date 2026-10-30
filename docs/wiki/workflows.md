@@ -1,7 +1,8 @@
 ---
 title: The workflows
 parent: how-it-works
-code: [templates/workflows/**, .github/workflows/wiki-*.yml, lib/mirror.js, lib/ping.js]
+code: [templates/workflows/**, .github/workflows/wiki-*.yml, lib/mirror.js, lib/ping.js, lib/protect.js, lib/hooks.js]
+verified: 54d34250e3a2
 ---
 
 # The workflows
@@ -16,7 +17,11 @@ Pull requests use `pull_request_target`, so the workflow runs from the default b
 
 ## The pull request check: wiki-check
 
-`wiki-check.yml` runs `hypatia check` on every pull request, with full history so it can see what the pull request changed, and hands it the description. That is how the [drift check](writing-pages.md#keeping-pages-in-step-with-the-code) reads a `wiki: no change needed - <reason>` line; editing the description runs it again.
+Every repo gets it. `wiki-check.yml` runs `hypatia check` on every pull request, with full history so it can list what changed, and hands it the description. That is how the [drift check](writing-pages.md#keeping-pages-in-step-with-the-code) reads a `wiki: no change needed for <page.md> - <reason>` line; editing the description runs it again. With `drift: warn` stale pages show as warnings and the check passes; with `drift: error` it fails.
+
+A failing check only blocks merging once GitHub requires it. `hypatia protect` does that after a yes: when the default branch's protection already requires status checks it adds `wiki-check` to that list, otherwise it adds a ruleset named "Hypatia wiki check", and it changes nothing else. When `gh` is missing or GitHub says no (a private repo on a free plan can't require checks), it prints the steps to do it by hand.
+
+On your own computer, `hypatia hooks install` writes a git pre-push hook that runs `hypatia check --warn --base origin/<default branch>`, so you see what the pull request check would say. It never blocks the push. A pre-push hook that isn't Hypatia's is left alone, and Hypatia prints the lines to add to it.
 
 ## The Wiki tab: wiki-mirror
 

@@ -2,6 +2,7 @@
 title: Configuration
 parent: start-here
 code: [docs/hypatia.yml, lib/team.js]
+verified: b4d3df65df32
 ---
 
 # Configuration
@@ -21,7 +22,7 @@ people:
     focus: Search that understands ingredients
     past: [search]           # pages they worked on that git may not show
     discord_id: "123456789012345678"   # optional: lets the Discord ping @mention them
-drift: true                  # pull requests must update the pages whose code they change
+drift: warn                  # off | warn | error: pages whose code changed since they were verified
 coverage: [src]              # every top-level folder in src/ needs a page
 ```
 
@@ -29,10 +30,10 @@ coverage: [src]              # every top-level folder in src/ needs a page
 
 `discord_id` is the numeric Discord user id (Discord: Settings > Advanced > Developer Mode, then right-click the name > Copy User ID). It goes on the website with the person, so only people who want pings should add theirs. Anything that is not a 17 to 20 digit number is left out with a warning.
 
-`drift:` and `coverage:` are off until you turn them on; see [writing pages](writing-pages.md#keeping-pages-in-step-with-the-code).
+`drift:` is `off`, `warn` (list stale pages, still pass) or `error` (fail the check). With no `drift:` line it is off, but `hypatia init` writes `drift: warn` for you. The older `true` and `false` still work and mean error and off; any other value is treated as off, with a warning. `coverage:` is off until you set it. See [writing pages](writing-pages.md#keeping-pages-in-step-with-the-code).
 
 An older `docs/team.yml` (a `people:` list in the same shape) still works. It is read when there is no `docs/hypatia.yml`, and it lists the whole team, as if it said `only_listed: true`.
 
 Setting `HYPATIA_NO_UPDATE_CHECK=1` in the environment stops Hypatia asking npm whether a newer version is out (it is already off when `CI` is set). See [how it works](how-it-works.md#the-commands).
 
-This repo's own `docs/hypatia.yml` sets the title, allows the made-up address in the example above and Max's public address, lists Max with his focus, and turns on `drift: true`, so every pull request here keeps its pages in step. It sets no `coverage:`: that check looks only at folders inside the folders it names, and Hypatia's code sits in flat folders (`lib/` holds files, not subfolders), so it would have nothing to check.
+This repo's own `docs/hypatia.yml` sets the title, allows the made-up address in the example above and Max's public address, lists Max with his focus, and sets `drift: error`, so a pull request here fails while any page is stale: Hypatia holds itself to the strict rule. It sets no `coverage:`: that check looks only at folders inside the folders it names, and Hypatia's code sits in flat folders (`lib/` holds files, not subfolders), so it would have nothing to check.
