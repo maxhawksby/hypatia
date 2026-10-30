@@ -409,3 +409,37 @@ test("the data says whether GitHub was read, so the site can tell 'nothing open'
       global.fetch = real;
     }
   }));
+
+test("stamps: each node carries its page's stamp state and stored stamp", () =>
+  withRepo(async (root) => {
+    const seen = [];
+    const pageStamps = (r, pages) => {
+      seen.push(r, pages);
+      return new Map([
+        ["docs/wiki/movement.md", { state: "stale", stored: "aaaaaaaaaaaa", actual: "bbbbbbbbbbbb" }],
+        ["docs/wiki/senses.md", { state: "unverified", stored: null, actual: "cccccccccccc" }],
+        ["docs/wiki/keyboard-teleop.md", { state: "current", stored: "dddddddddddd", actual: "dddddddddddd" }],
+      ]);
+    };
+    const g = await build(root, { pageStamps });
+    assert.strictEqual(seen[0], path.resolve(root));
+    assert.ok(seen[1].some((p) => p.path === "docs/wiki/movement.md" && Array.isArray(p.code)));
+    const stamp = Object.fromEntries(g.nodes.map((n) => [n.id, n.stamp]));
+    assert.deepStrictEqual(stamp, {
+      oak: { state: "none", stored: null },
+      "keyboard-teleop": { state: "current", stored: "dddddddddddd" },
+      movement: { state: "stale", stored: "aaaaaaaaaaaa" },
+      "object-detection": { state: "none", stored: null }, // not in the map
+      senses: { state: "unverified", stored: null },
+    });
+  }));
+
+test("stamps: without stamp data every node is \"none\"", () =>
+  withRepo(async (root) => {
+    const g = await build(root, { pageStamps: () => null });
+    assert.ok(g.nodes.every((n) => n.stamp.state === "none" && n.stamp.stored === null));
+    // the real lib/stamp.js, or none at all: always one of the four states
+    const states = new Set(["current", "stale", "unverified", "none"]);
+    assert.ok((await build(root)).nodes.every((n) => states.has(n.stamp.state)));
+    if (!fs.existsSync(path.join(__dirname, "../lib/stamp.js"))) assert.ok((await build(root)).nodes.every((n) => n.stamp.state === "none"));
+  }));
