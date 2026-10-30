@@ -7,6 +7,13 @@
 
   const GREYS = ["#e6e6e6", "#9a9a9a", "#666666"];   // center page, hubs, pages
   const BG = "#161616";
+  const STALE = "#ff6b57";                            // ring on pages whose code changed (--stale in style.css)
+  // a page's stamp: is it checked against the code it covers? "none" = no code: (or older data)
+  const STAMP_TEXT = {
+    current: "Checked against the current code",
+    stale: "Code changed since this page was last checked",
+    unverified: "Not checked yet",
+  };
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   const $ = (id) => document.getElementById(id);
@@ -31,6 +38,7 @@
   const byId = {}, byPath = {}, kids = {}, nbrs = {}, people = {};
   const missing = new Set(); // paths of linked pages that do not exist yet (local site only)
   let hubs = [], current = null, filterPerson = null, viewedPerson = null;
+  let filterStamp = null;    // "stale" or "unverified": the map shows only those pages
 
   // ---------- load ----------
   function getJSON(url) {
@@ -107,6 +115,9 @@
     out.nodes.forEach((n) => {
       n.code = arr(n.code); n.markdown = n.markdown || ""; n.depth = n.depth ?? (n.id === center ? 0 : 2);
       n.hub = n.hub || (n.depth === 1 ? n.id : null);
+      // older data has no stamp: nothing to show
+      const st = n.stamp && n.stamp.state;
+      n.stamp = { state: STAMP_TEXT[st] ? st : "none", stored: (n.stamp && n.stamp.stored) || null };
     });
     out.work.forEach((w) => { w.pages = arr(w.pages); w.assignees = arr(w.assignees); });
     out.recent.forEach((r) => { r.pages = arr(r.pages); });
@@ -372,8 +383,10 @@
     const pre = new URLSearchParams(location.search).get("person");
     if (pre && people[pre] && !location.hash) history.replaceState(null, "", personHash(pre));
   }
-  // map legend: one button per teammate; pressing one lights up their pages
+  // map legend: one button per teammate; pressing one lights up their pages.
+  // Then the out of date pages, if any: pressing one shows only those.
   let lastPage = null;
+  const ring = (state) => h("span", { class: "ring " + state, "aria-hidden": "true" });
   function renderLegend() {
     const el = $("legend");
     el.textContent = "";
@@ -382,6 +395,24 @@
       el.append(h("button", { type: "button", class: "lg", "aria-pressed": String(on),
         title: on ? "Back to the page you were reading" : "Show " + p.name + "'s pages",
         onclick: () => (on ? go(lastPage) : goPerson(p.id)) }, dot(p.color), p.name));
+    });
+    const stamps = [
+      ["stale", "stale", "Show only pages whose code changed since they were last checked"],
+      ["unverified", "not checked", "Show only pages nobody has checked against the code yet"],
+    ];
+    let sep = false;
+    stamps.forEach(([state, label, title]) => {
+      const k = D.nodes.filter((n) => n.stamp.state === state).length;
+      if (!k) { if (filterStamp === state) filterStamp = null; return; }
+      if (!sep && D.people.length) el.append(h("span", { class: "lg-break", "aria-hidden": "true" }));
+      sep = true;
+      const on = filterStamp === state;
+      el.append(h("button", { type: "button", class: "lg", "aria-pressed": String(on), title: on ? "Show all pages" : title,
+        onclick: () => {
+          filterStamp = on ? null : state;
+          if (filterPerson) go(lastPage); // back to the map of pages, with this filter on
+          renderLegend(); Graph.draw();
+        } }, ring(state), k + " " + label));
     });
   }
 
@@ -827,6 +858,15 @@
     const row = (label, ...lines) => { if (lines.some(Boolean)) rows.push(h("dt", null, label), h("dd", null, ...lines.filter(Boolean))); };
     const who = (pid, fallback) => h("span", { class: "who", style: "color:" + personColor(pid) }, personName(pid, fallback));
     const ext = (label, url) => (D.published ? h("a", { href: url, target: "_blank", rel: "noopener" }, label) : h("span", { class: "off", title: "Not on GitHub yet" }, label));
+
+    // first: is this page checked against its code, and what to do if not
+    const st = n.stamp.state;
+    if (st === "current") row("Status", h("div", { class: "line stamp" }, dot("var(--ok)"), STAMP_TEXT.current));
+    if (st === "stale" || st === "unverified") {
+      row("Status", h("div", { class: "line stamp " + st }, ring(st), h("span", { class: "stamp-t" }, STAMP_TEXT[st])),
+        h("div", { class: "line off" }, st === "stale" ? "Ask your agent to update this page."
+          : ["Ask your agent to reread it, then run ", h("code", null, "hypatia verify"), "."]));
+    }
 
     // one line per item, newest first; long lists fold after 3
     const works = (workByPage[n.id] || []).slice().sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
@@ -1329,8 +1369,9 @@
       const lit = new Set(cur ? [cur, ...nbrs[cur]] : []);
       const pf = filterPerson ? personPages(filterPerson) : null;
       const pcol = filterPerson ? personColor(filterPerson) : null;
-      const isLit = (id) => (pf ? pf.has(id) || id === cur : lit.has(id));
-      const dimAll = !!pf || (cur && cur !== D.center);
+      const sf = !pf && filterStamp ? new Set(D.nodes.filter((n) => n.stamp.state === filterStamp).map((n) => n.id)) : null;
+      const isLit = (id) => (pf ? pf.has(id) || id === cur : sf ? sf.has(id) || id === cur : lit.has(id));
+      const dimAll = !!pf || !!sf || (cur && cur !== D.center);
 
       // edges: grey; the current page's links light up, a teammate's in their color
       ctx.lineCap = "round";
@@ -1359,9 +1400,17 @@
         ctx.globalAlpha = on ? 1 : 0.3;
         ctx.fillStyle = pf ? (pf.has(n.id) ? pcol : greyOf(n)) : nodeColor(n);
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        // out of date: a red ring (code changed) or a dashed one (never checked), just outside the dot
+        const late = n.stamp.state === "stale" || n.stamp.state === "unverified";
+        if (late) {
+          ctx.strokeStyle = STALE; ctx.lineWidth = 1.5;
+          ctx.setLineDash(n.stamp.state === "unverified" ? [2.4, 2.2] : []);
+          ctx.beginPath(); ctx.arc(x, y, r + 2.6, 0, Math.PI * 2); ctx.stroke();
+          ctx.setLineDash([]);
+        }
         if (n.id === cur || peeked === n) {
           ctx.strokeStyle = n.id === cur ? "#ffffff" : "rgba(255,255,255,.6)"; ctx.lineWidth = 1.6;
-          ctx.beginPath(); ctx.arc(x, y, r + 3.5, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(x, y, r + (late ? 6 : 3.5), 0, Math.PI * 2); ctx.stroke();
         }
         ctx.globalAlpha = 1;
       });
@@ -1370,7 +1419,7 @@
       const showPages = cam.k >= fitK * 1.55;
       ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.lineJoin = "round";
       order.slice().reverse().forEach((n) => {
-        const hot = n.id === cur || hover === n || peeked === n || (pf ? pf.has(n.id) : lit.has(n.id) && cur !== D.center);
+        const hot = n.id === cur || hover === n || peeked === n || (pf ? pf.has(n.id) : sf ? sf.has(n.id) : lit.has(n.id) && cur !== D.center);
         if (n.depth === 2 && !showPages && !hot) return;
         const [x, y] = toScreen(n.x, n.y), r = radius(n);
         const on = !dimAll || isLit(n.id) || hover === n || peeked === n;
@@ -1452,6 +1501,7 @@
       tip.textContent = "";
       tip.append(h("strong", null, n.title));
       if (n.summary) tip.append(h("span", null, n.summary));
+      if (n.stamp.state === "stale" || n.stamp.state === "unverified") tip.append(h("span", { class: "tip-meta tip-stale" }, STAMP_TEXT[n.stamp.state]));
       const ps = pagePeople(n.id);
       if (ps.length) tip.append(h("span", { class: "tip-meta" }, ps.map((pid, i) => [i ? ", " : "",
         h("span", { style: "color:" + personColor(pid) + ";font-weight:500" }, personName(pid))]), " working here"));
