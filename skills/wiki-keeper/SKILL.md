@@ -49,6 +49,8 @@ So the wiki graph shows who is working on what:
    - how it breaks (known failure modes and what they look like).
    Not code internals: no function names or line-by-line walkthroughs.
 3. Then run `{{HYPATIA}} verify {{WIKI_DIR}}/<slug>.md`. Verify only after you actually reread the code. If nothing on the page needed to change, rereading and verifying is still the right move. Never verify a page you did not check.
+   `git add` new files first: files git does not track are left out of the stamp.
+   If a merge conflicts on a `verified:` line, don't pick a side: reread the page against the merged code and verify again.
 4. New part of the code (a new top-level folder, package or service): create `{{WIKI_DIR}}/<slug>.md` with title, parent (its hub) and `code:` paths that cover the whole folder (`code: [src/<folder>/**]`), link it from the hub page, and verify it. With `coverage:` set in `{{CONFIG_FILE}}`, the check fails until every folder there has a page.
 5. Never delete or merge pages without asking the human first. A removed part of the code is a question for them, not a cleanup for you.
 6. Never invent facts: if you don't know something (a limit, an owner, a failure mode), write `TODO(owner): <question>`. Keep pages short: a few paragraphs or bullets, linking to other pages rather than repeating them.
