@@ -9,6 +9,8 @@
 //   hypatia ping [--dry-run]                 post a review request or question to Discord (in GitHub Actions)
 //   hypatia init [--yes] [--dry-run]         set Hypatia up in this repo
 //   hypatia upgrade [--yes] [--dry-run]      bring the files init installed up to this version
+//   hypatia protect [--yes] [--dry-run]      make the wiki check required on the default branch
+//   hypatia hooks install | remove           warn before each git push (never blocks it)
 //
 // Run it from anywhere inside the repo; it works on the repo's top folder.
 "use strict";
@@ -22,6 +24,8 @@ const { loadConfig } = require("../lib/team");
 const privacy = require("../lib/privacy");
 const { init } = require("../lib/init");
 const { upgrade, upgradeNotice } = require("../lib/upgrade");
+const { protect } = require("../lib/protect");
+const { hooks } = require("../lib/hooks");
 const { lint, repoFiles } = require("../lib/lint");
 const drift = require("../lib/drift");
 const { verifyCommand } = require("../lib/stamp");
@@ -38,6 +42,8 @@ const COMMANDS = {
   verify: "Mark pages as checked against their code",
   build: "Write the website to a folder",
   upgrade: "Bring the installed files up to this version",
+  protect: "Make the wiki check required before merging",
+  hooks: "Warn before each git push on this computer",
   mirror: "Copy the pages into the repo's GitHub Wiki",
   ping: "Post review requests and questions to Discord",
 };
@@ -46,13 +52,14 @@ const COMMANDS = {
 const DETAILS = {
   init: `hypatia init [--dry-run] [--yes] [--public | --private] [--runner "<command>"] [--with check,mirror,ping]
     Sets Hypatia up in this repo: a docs/wiki/ folder with a starter page,
-    the wiki-keeper agent skill, and a way to open the wiki locally. A
+    the wiki-keeper agent skill, a way to open the wiki locally, the wiki
+    check on every pull request, and "drift: warn" in docs/hypatia.yml (the
+    check lists pages that fell behind their code, without failing). A
     public repo also gets the GitHub Pages workflow and the website link in
     its About box, after you say yes. Never overwrites a file; safe to run
     again. --dry-run only prints the plan.
-    --with adds optional GitHub workflows to any repo: check (the wiki
-    check on pull requests; public repos get it anyway), mirror (the
-    GitHub Wiki tab) and ping (Discord posts).`,
+    --with adds optional GitHub workflows to any repo: mirror (the GitHub
+    Wiki tab) and ping (Discord posts).`,
   serve: `hypatia serve [--port <number>] [--no-open]
     Builds the wiki for this repo, serves it at http://localhost:4410/,
     opens your browser and reloads it when README.md, docs/wiki/ or
@@ -85,10 +92,24 @@ const DETAILS = {
   upgrade: `hypatia upgrade [--dry-run] [--yes] [--no-drift] [--public | --private]
     Brings the files init installed up to this version: rewrites the
     wiki-keeper skill and the wiki workflows from this version's templates,
-    keeping the repo's branch and runner, adds the pull request check to a
-    repo with the website, and offers to turn on the drift check. Shows the
-    plan and asks first; a file edited by hand is marked, since its edits
-    would be lost. --dry-run only prints the plan.`,
+    keeping the repo's branch and runner, adds the pull request check when
+    it is missing, and offers "drift: warn" when the config has no drift:
+    line (one already there is kept). Shows the plan and asks first; a file
+    edited by hand is marked, since its edits would be lost. --dry-run only
+    prints the plan.`,
+  protect: `hypatia protect [--dry-run] [--yes]
+    Makes the "wiki-check" job a required check on the default branch, so a
+    pull request can't merge while the check fails. Adds it to the branch
+    protection already there, or else adds a ruleset; nothing else changes.
+    Shows the change and asks first. Uses the GitHub CLI (gh); when gh is
+    missing or GitHub says no (a private repo on a free plan can't require
+    checks), it prints the steps to do it by hand.`,
+  hooks: `hypatia hooks install | remove
+    install writes a git pre-push hook that runs
+    "hypatia check --warn --base origin/<default branch>" before each push,
+    so you see what the pull request check would say. It never blocks the
+    push. A pre-push hook that is not Hypatia's is left alone; Hypatia
+    prints the lines to add to it. remove takes Hypatia's hook out.`,
   mirror: `hypatia mirror --out <folder> [--repo <owner/name>] [--branch <name>]
     Writes the published pages into a clone of the repo's GitHub Wiki
     (<repo>.wiki.git): README.md becomes Home, links point at wiki pages or
@@ -369,6 +390,8 @@ async function main(argv) {
   const root = repoRoot(process.cwd());
   if (command === "init") return withUpdateNotice(command, () => init(root, rest));
   if (command === "upgrade") return withUpdateNotice(command, () => upgrade(root, rest));
+  if (command === "protect") return protect(root, rest);
+  if (command === "hooks") return hooks(root, rest);
   if (command === "serve") return serve(root, rest);
   if (command === "build") return build(root, rest);
   if (command === "check") return withUpdateNotice(command, () => check(root, rest));

@@ -18,6 +18,8 @@ const CLI = path.join(__dirname, "..", "bin", "hypatia.js");
 const RUNNER = "npx --yes acme-hypatia@1.0.0"; // a runner GitHub could download
 const SKILL = ".claude/skills/wiki-keeper/SKILL.md";
 const SITE_WORKFLOW = ".github/workflows/wiki-site.yml";
+const CHECK_WORKFLOW = ".github/workflows/wiki-check.yml";
+const workflows = (root) => (fs.existsSync(path.join(root, ".github/workflows")) ? fs.readdirSync(path.join(root, ".github/workflows")).sort() : []);
 
 // A stand-in for gh with a repo's state on GitHub; it changes the state on
 // writes so a second run sees the first one's work. gh.writes() lists them.
@@ -87,7 +89,7 @@ function freshRepo() {
 const exists = (root, rel) => fs.existsSync(path.join(root, rel));
 const read = (root, rel) => fs.readFileSync(path.join(root, rel), "utf8");
 
-test("a fresh repo gets a starter page and the skill, passes the check, and a second run changes nothing", async () => {
+test("a fresh repo gets a starter page, the skill, the check and drift: warn, passes the check, and a second run changes nothing", async () => {
   const repo = freshRepo();
   try {
     const gh = fakeGh();
@@ -95,7 +97,9 @@ test("a fresh repo gets a starter page and the skill, passes the check, and a se
     assert.strictEqual(first.code, 0, first.out);
     assert.ok(exists(repo.root, "docs/wiki/start-here.md"));
     assert.ok(exists(repo.root, SKILL));
-    assert.ok(!exists(repo.root, ".github"), "no website for a repo that is not public");
+    assert.deepStrictEqual(workflows(repo.root), ["wiki-check.yml"], "the pull request check, and no website for a repo that is not public");
+    assert.match(read(repo.root, CHECK_WORKFLOW), /branches: \[trunk\]/);
+    assert.match(read(repo.root, "docs/hypatia.yml"), /^drift: warn\b/m);
     assert.deepStrictEqual(gh.calls, [], "no GitHub remote: gh is never run");
     assert.match(first.out, /private \(no GitHub remote\), default branch trunk/);
     assert.match(first.out, /No website: this repo is private/);
@@ -120,6 +124,8 @@ test("a fresh repo gets a starter page and the skill, passes the check, and a se
     assert.deepStrictEqual(snapshot(repo.root), before);
     assert.match(again.out, /= docs\/wiki\/\s+already has 1 wiki page; left as is/);
     assert.match(again.out, /= \.claude\/skills\/wiki-keeper\/SKILL\.md\s+already there; left as is/);
+    assert.match(again.out, /= docs\/hypatia\.yml\s+"drift: warn" is set; left as is/);
+    assert.match(again.out, /= \.github\/workflows\/wiki-check\.yml\s+already there; left as is/);
     assert.match(again.out, /Nothing new to set up/);
   } finally {
     repo.cleanup();
@@ -134,11 +140,47 @@ test("init never overwrites a page, the skill or a wiki script that is already t
     const before = snapshot(repo.root);
     const r = await run(repo.root, ["--runner", RUNNER, "--yes"]);
     assert.strictEqual(r.code, 0, r.out);
-    assert.deepStrictEqual(snapshot(repo.root), before);
+    const after = snapshot(repo.root);
+    for (const [rel, text] of Object.entries(before)) assert.strictEqual(after[rel], text, rel);
+    assert.deepStrictEqual(Object.keys(after).filter((rel) => !(rel in before)).sort(), [CHECK_WORKFLOW, "docs/hypatia.yml"], "only new files are added");
     assert.match(r.out, /already has 4 wiki pages; left as is/);
     assert.match(r.out, /already there and different from this version; left as is/);
     assert.match(r.out, /already has a "wiki" script of its own; left as is/);
     assert.ok(!exists(repo.root, "docs/wiki/start-here.md"), "no starter page next to real pages");
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("init adds drift: warn to a config without one, and leaves a drift: line already there alone", async () => {
+  const repo = makeRepo({ generic: true });
+  try {
+    const config = "title: Acme Notes\nallow: [help@example.com]";
+    write(repo.root, "docs/hypatia.yml", config);
+    const r = await run(repo.root, ["--runner", RUNNER]);
+    assert.strictEqual(r.code, 0, r.out);
+    assert.match(r.out, /\+ docs\/hypatia\.yml\s+adds "drift: warn"/);
+    assert.strictEqual(read(repo.root, "docs/hypatia.yml"), `${config}\ndrift: warn\n`);
+
+    write(repo.root, "docs/hypatia.yml", "title: Acme Notes\ndrift: error\n");
+    const kept = await run(repo.root, ["--runner", RUNNER]);
+    assert.match(kept.out, /= docs\/hypatia\.yml\s+"drift: error" is set; left as is/);
+    assert.strictEqual(read(repo.root, "docs/hypatia.yml"), "title: Acme Notes\ndrift: error\n");
+    assert.doesNotMatch(kept.out, /only warns/, "the warn note is only for drift: warn");
+    assert.match(kept.out, /protect after that push/);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("the older docs/team.yml gets the drift line when that is the repo's config", async () => {
+  const repo = makeRepo();
+  try {
+    const before = read(repo.root, "docs/team.yml");
+    const r = await run(repo.root, ["--runner", RUNNER]);
+    assert.strictEqual(r.code, 0, r.out);
+    assert.strictEqual(read(repo.root, "docs/team.yml"), `${before}${before.endsWith("\n") ? "" : "\n"}drift: warn\n`);
+    assert.ok(!exists(repo.root, "docs/hypatia.yml"), "no second config file to shadow the first");
   } finally {
     repo.cleanup();
   }
@@ -171,8 +213,8 @@ test("a dry run prints the plan and changes nothing, on disk or on GitHub", asyn
     assert.deepStrictEqual(snapshot(repo.root), before);
     assert.deepStrictEqual(gh.writes(), []);
     assert.deepStrictEqual(r.asked, [], "a dry run asks nothing");
-    assert.match(r.out, /Dry run: nothing was changed\. Run it without --dry-run to do the 8 \+ steps\./);
-    for (const step of ["docs/wiki/start-here.md", SKILL, "package.json", SITE_WORKFLOW, ".github/workflows/wiki-refresh.yml", ".github/workflows/wiki-check.yml", "GitHub: Pages", "GitHub: About website"]) {
+    assert.match(r.out, /Dry run: nothing was changed\. Run it without --dry-run to do the 9 \+ steps\./);
+    for (const step of ["docs/wiki/start-here.md", SKILL, "package.json", "docs/hypatia.yml", SITE_WORKFLOW, ".github/workflows/wiki-refresh.yml", ".github/workflows/wiki-check.yml", "GitHub: Pages", "GitHub: About website"]) {
       assert.match(r.out, new RegExp(`\\+ ${step.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}`));
     }
     assert.match(r.out, /set to https:\/\/acme\.github\.io\/notes-app\//);
@@ -245,7 +287,7 @@ test("public repo with no terminal and no --yes: only the local parts happen", a
     const gh = fakeGh({ visibility: "PUBLIC" });
     const r = await run(repo.root, ["--runner", RUNNER], { gh, answer: null });
     assert.strictEqual(r.code, 0, r.out);
-    assert.ok(!exists(repo.root, ".github"));
+    assert.deepStrictEqual(workflows(repo.root), ["wiki-check.yml"], "the check is not the website: it goes in without the yes");
     assert.deepStrictEqual(gh.writes(), []);
     assert.match(r.out, /No terminal to ask, so the public website is not set up\. Rerun with --yes/);
   } finally {
@@ -253,13 +295,24 @@ test("public repo with no terminal and no --yes: only the local parts happen", a
   }
 });
 
-test("private repo: no workflows, no GitHub changes, and it says how to open the wiki locally", async () => {
+test("private repo: the check and drift: warn, no website, no GitHub changes, and next steps for warn, protect and hooks", async () => {
   const repo = makeRepo({ generic: true });
   try {
     const gh = fakeGh({ visibility: "PRIVATE" });
     const r = await run(repo.root, ["--runner", RUNNER, "--yes"], { gh });
     assert.strictEqual(r.code, 0, r.out);
-    assert.ok(!exists(repo.root, ".github"));
+    assert.deepStrictEqual(workflows(repo.root), ["wiki-check.yml"]);
+    const check = read(repo.root, CHECK_WORKFLOW);
+    assert.deepStrictEqual(templates.placeholders(check), []);
+    assert.match(check, /branches: \[main\]/);
+    assert.match(check, /run: npx --yes acme-hypatia@1\.0\.0 check/);
+    assert.match(check, /hypatia protect/, "the workflow says how to make it required");
+    assert.match(read(repo.root, "docs/hypatia.yml"), /^drift: warn {3}# off \| warn \| error/m);
+    assert.match(r.out, /\+ docs\/hypatia\.yml\s+new config with "drift: warn"/);
+    assert.match(r.out, /For now it only warns when a page falls behind its code; set "drift: error" in docs\/hypatia\.yml/);
+    assert.match(r.out, new RegExp(`Run ${RUNNER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} protect after that push to make the check required before anything merges into main\.`));
+    assert.match(r.out, /hooks install warns you on this computer before each git push \(it never blocks the push\)/);
+    assert.ok(!exists(repo.root, ".git/hooks/pre-push"), "init only mentions the hook");
     assert.deepStrictEqual(gh.writes(), []);
     assert.deepStrictEqual(gh.calls.map((a) => a.slice(0, 2)), [["repo", "view"]], "a private repo's Pages are not even read");
     assert.match(r.out, /private \(GitHub says so\)/);
@@ -276,6 +329,8 @@ test("a runner on this computer never goes into a workflow, even with --yes", as
     const r = await run(repo.root, ["--runner", "node /home/me/hypatia/bin/hypatia.js", "--yes"], { gh });
     assert.strictEqual(r.code, 0, r.out);
     assert.ok(!exists(repo.root, ".github"));
+    assert.match(r.out, /! \.github\/workflows\/wiki-check\.yml\s+not installed/);
+    assert.doesNotMatch(r.out, /protect after that push/, "no check, so nothing to make required");
     assert.deepStrictEqual(gh.writes(), []);
     assert.match(r.out, /! \.github\/workflows\/wiki-site\.yml\s+not installed: GitHub can't run Hypatia from a folder on this computer/);
     assert.match(r.out, /No website yet: GitHub needs a Hypatia it can download/);
