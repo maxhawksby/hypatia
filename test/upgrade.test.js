@@ -27,12 +27,12 @@ const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const read = (root, rel) => fs.readFileSync(path.join(root, rel), "utf8");
 const exists = (root, rel) => fs.existsSync(path.join(root, rel));
 
-// What 0.2.1 installed: the skill without a stamp (and without the drift
-// sentence it did not have yet), and, for a public repo, the two website
+// What 0.2.1 installed: the skill without a stamp (and without the stamps
+// paragraph it did not have yet), and, for a public repo, the two website
 // workflows pinned to npx hypatia@0.2.1.
 function oldInstall(root, { cli = "npx hypatia", runner = "npx hypatia@0.2.1", website = true } = {}) {
   const values = templateValues(root, { slug: "acme/notes-app", branch: "master", cli });
-  write(root, SKILL, templates.render("skills/wiki-keeper/SKILL.md", values).replace(/ When the repo turns on the drift check[^\n]*/, ""));
+  write(root, SKILL, templates.render("skills/wiki-keeper/SKILL.md", values).replace(/\n`verified:` is a stamp[^\n]*\n/, ""));
   if (!website) return;
   write(root, SITE, templates.render("templates/workflows/wiki-site.yml", { ...values, HYPATIA: runner }));
   write(root, REFRESH, templates.render("templates/workflows/wiki-refresh.yml", { ...values, HYPATIA: runner }));
@@ -85,7 +85,8 @@ test("an old install moves to this version: skill stamped, pins moved, the pull 
     assert.deepStrictEqual(templates.readStamp(skill), { version: VERSION, edited: false });
     assert.match(skill, /^---\nname: wiki-keeper\n[\s\S]*?\n---\n\n<!-- Made by Hypatia /, "the stamp comes after the front matter");
     assert.match(skill, /`npx hypatia serve`/);
-    assert.match(skill, /drift: true/);
+    assert.match(skill, /`verified:` is a stamp/);
+    assert.match(skill, /`npx hypatia verify docs\/wiki\/<slug>\.md`/);
     for (const rel of [SITE, CHECK]) {
       const text = read(repo.root, rel);
       assert.match(text, new RegExp(`run: npx hypatia@${esc(VERSION)} (build|check)`), rel);
